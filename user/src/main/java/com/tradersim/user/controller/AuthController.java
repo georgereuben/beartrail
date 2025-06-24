@@ -3,6 +3,7 @@ package com.tradersim.user.controller;
 import com.tradersim.user.dto.AuthResponse;
 import com.tradersim.user.dto.LoginRequest;
 import com.tradersim.user.dto.UserRegistrationRequest;
+import com.tradersim.user.exception.UserAlreadyExistsException;
 import com.tradersim.user.model.User;
 import com.tradersim.user.security.JwtUtil;
 import com.tradersim.user.service.AuthService;
@@ -16,15 +17,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
-
 @RequestMapping("/api/auth")
 @RestController
 public class AuthController {
 
-    private AuthService authService;
-    private UserService userService;
-    private JwtUtil jwtUtil;
+    private final AuthService authService;
+    private final UserService userService;
+    private final JwtUtil jwtUtil;
 
     @Autowired
     public AuthController (AuthService authService, UserService userService, JwtUtil jwtUtil)  {
@@ -60,6 +59,12 @@ public class AuthController {
                     .email(user.getEmail())
                     .build();
             return ResponseEntity.ok(response);
+        } catch (UserAlreadyExistsException e) {
+            AuthResponse errorResponse = AuthResponse.builder()
+                    .success(false)
+                    .message("Registration failed: " + e.getMessage())
+                    .build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
         } catch (Exception e) {
             AuthResponse errorResponse = AuthResponse.builder()
                     .success(false)

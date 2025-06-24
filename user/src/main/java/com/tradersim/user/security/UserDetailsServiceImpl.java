@@ -30,7 +30,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        // Check user status and throw appropriate exceptions
         if (!user.isEnabled()) {
             throw new DisabledException("User account is disabled");
         }
