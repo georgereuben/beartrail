@@ -36,7 +36,11 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request) {
         try {
             AuthResponse response = authService.authenticate(request);
-            return ResponseEntity.ok(response);
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
         } catch (Exception exception) {
             AuthResponse errorResponse = AuthResponse.builder()
                     .success(false)

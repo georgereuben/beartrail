@@ -31,7 +31,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -43,4 +43,4 @@ public class User {
     private boolean locked = false;
     private boolean credentialsExpired = false;
     private boolean emailVerified = false;
-} 
+}
