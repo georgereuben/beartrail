@@ -38,7 +38,7 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockBean                           // TODO: Replace @MockBean usage (deprecated in Spring 6)
     private AuthService authService;
 
     @MockBean
