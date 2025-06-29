@@ -3,9 +3,9 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: tradersim-postgres
+    container_name: beartrail-postgres
     environment:
-      POSTGRES_DB: tradersim
+      POSTGRES_DB: beartrail
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
     ports:
@@ -15,14 +15,14 @@ services:
     networks:
       - tradersim-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d tradersim"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d beartrail"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   redis:
     image: redis:7-alpine
-    container_name: tradersim-redis
+    container_name: beartrail-redis
     ports:
       - "6379:6379"
     volumes:
