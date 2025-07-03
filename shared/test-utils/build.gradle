@@ -1,0 +1,14 @@
+plugins {
+    id 'java-library'
+}
+
+description = 'Shared test utilities for BearTrail services'
+
+dependencies {
+    api 'org.springframework.boot:spring-boot-starter-test'
+    api 'org.testcontainers:junit-jupiter'
+    api 'org.testcontainers:postgresql'
+    api 'org.testcontainers:kafka'
+    api 'org.springframework.kafka:spring-kafka-test'
+    api 'com.fasterxml.jackson.core:jackson-databind'
+}

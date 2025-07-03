@@ -1,6 +1,9 @@
 # Context document
 context.md
 
+# Documentation folder (not for version control)
+r_docs/
+
 # Compiled class files
 *.class
 
@@ -87,4 +90,4 @@ postman/
 # TODO files
 TODO.md
 TODO.txt
-*.todo 
+*.todo
