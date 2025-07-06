@@ -82,4 +82,9 @@ build/
 .env.production.local
 
 # Testing and API collections (Postman)
-postman/ 
+postman/
+
+# TODO files
+TODO.md
+TODO.txt
+*.todo 
