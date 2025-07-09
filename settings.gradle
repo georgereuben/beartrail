@@ -1,0 +1,26 @@
+rootProject.name = 'beartrail'
+
+// Include all microservices
+include 'services:user-management'
+include 'services:market-data'
+include 'services:order-simulation'
+include 'services:portfolio'
+include 'services:leaderboard'
+include 'services:notification'
+include 'services:api-gateway'
+
+// Include shared libraries
+include 'shared:common'
+include 'shared:test-utils'
+
+// Configure project directories
+project(':services:user-management').projectDir = file('services/user-management')
+project(':services:market-data').projectDir = file('services/market-data')
+project(':services:order-simulation').projectDir = file('services/order-simulation')
+project(':services:portfolio').projectDir = file('services/portfolio')
+project(':services:leaderboard').projectDir = file('services/leaderboard')
+project(':services:notification').projectDir = file('services/notification')
+project(':services:api-gateway').projectDir = file('services/api-gateway')
+
+project(':shared:common').projectDir = file('shared/common')
+project(':shared:test-utils').projectDir = file('shared/test-utils')
