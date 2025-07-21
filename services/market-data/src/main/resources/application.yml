@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: market-data
+
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/market_data
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: market-data-group
+      auto-offset-reset: earliest
+
+  # Upstox API Configuration
+  upstox:
+    auth-token: ${UPSTOX_AUTH_TOKEN:default-token}
+    api-url: ${UPSTOX_API_URL:https://api.upstox.com/v2}
