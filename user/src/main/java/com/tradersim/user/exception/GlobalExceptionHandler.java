@@ -17,6 +17,11 @@ public class GlobalExceptionHandler {
         return "Invalid credentials: " + ex.getMessage();
     }
 
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public String handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        return "User already exists: " + ex.getMessage();
+    }
+
     @ExceptionHandler(Exception.class)
     public String handleGeneralException(Exception ex) {
         return "An error occurred: " + ex.getMessage();

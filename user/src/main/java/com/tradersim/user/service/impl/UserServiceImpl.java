@@ -2,6 +2,7 @@ package com.tradersim.user.service.impl;
 
 import com.tradersim.user.dto.UserRegistrationRequest;
 import com.tradersim.user.dto.UserResponse;
+import com.tradersim.user.exception.UserAlreadyExistsException;
 import com.tradersim.user.model.User;
 import com.tradersim.user.repository.UserRepository;
 import com.tradersim.user.service.UserService;
@@ -38,7 +39,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> registerUser(UserRegistrationRequest request) {
         if(userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already in use");
+            throw new UserAlreadyExistsException("Email already in use");
         }
 
         User user = new User();
