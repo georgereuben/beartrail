@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,15 +24,12 @@ public class AuthController {
 
     private AuthService authService;
     private UserService userService;
-    private AuthenticationManager authenticationManager;
     private JwtUtil jwtUtil;
 
     @Autowired
-    public AuthController (AuthService authService, UserService userService,
-                           AuthenticationManager authenticationManager, JwtUtil jwtUtil)  {
+    public AuthController (AuthService authService, UserService userService, JwtUtil jwtUtil)  {
         this.authService = authService;
         this.userService = userService;
-        this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
     }
 
@@ -72,4 +68,4 @@ public class AuthController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
-} 
+}

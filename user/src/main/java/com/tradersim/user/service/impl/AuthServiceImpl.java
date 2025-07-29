@@ -10,6 +10,10 @@ import com.tradersim.user.repository.UserRepository;
 import com.tradersim.user.security.JwtUtil;
 import com.tradersim.user.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,37 +31,32 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final AuthenticationManager authenticationManager;
 
     @Autowired
     public AuthServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            JwtUtil jwtUtil,
-                           UserDetailsService userDetailsService) {
+                           UserDetailsService userDetailsService,
+                           AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.authenticationManager = authenticationManager;
     }
 
     @Override
     public AuthResponse authenticate(LoginRequest request) {
         try {
+            UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
+
+            Authentication authentication = authenticationManager.authenticate(authToken);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
             User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new UserNotFoundException("User not found with email: " + request.getEmail()));
-
-            if (!user.isEnabled()) {
-                throw new BadCredentialsException("User account is disabled");
-            }
-
-            if (user.isLocked()) {
-                throw new BadCredentialsException("User account is locked");
-            }
-
-            if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new BadCredentialsException("Invalid credentials");
-            }
-
-            UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+                    .orElseThrow(() -> new RuntimeException("User not found with email: " + request.getEmail()));
 
             String accessToken = jwtUtil.generateToken(userDetails);
             String refreshToken = jwtUtil.generateRefreshToken(userDetails);
@@ -86,10 +85,15 @@ public class AuthServiceImpl implements AuthService {
                     .message("Authentication successful")
                     .build();
 
-        } catch (UserNotFoundException | BadCredentialsException exception) {
+        } catch (AuthenticationException exception) {
             return AuthResponse.builder()
                     .success(false)
-                    .message(exception.getMessage())
+                    .message("Authentication failed: " + exception.getMessage())
+                    .build();
+        } catch (Exception exception) {
+            return AuthResponse.builder()
+                    .success(false)
+                    .message("Authentication error: " + exception.getMessage())
                     .build();
         }
     }
@@ -125,4 +129,4 @@ public class AuthServiceImpl implements AuthService {
 
     // Optionally: void initiatePasswordReset(String email);
     
-} 
+}
