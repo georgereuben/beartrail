@@ -18,4 +18,13 @@ public enum TimeInterval {
     TimeInterval(String value) {
         this.value = value;
     }
+
+    public static TimeInterval fromValue(TimeInterval timeInterval) {
+        for (TimeInterval interval : TimeInterval.values()) {
+            if (interval.getValue().equals(timeInterval.getValue())) {
+                return interval;
+            }
+        }
+        throw new IllegalArgumentException("Invalid time interval: " + timeInterval.getValue());
+    }
 }

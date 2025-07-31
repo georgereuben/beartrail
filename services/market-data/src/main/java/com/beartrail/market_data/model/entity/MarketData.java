@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+/**
+ * Represents an OHLCV candle for a specific symbol at a given time interval.
+ */
 @Entity
 @Table(name = "market_data")
 @Data
