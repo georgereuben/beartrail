@@ -9,5 +9,5 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "upstox")
 public class UpstoxConfig {
     private String authToken;
-    private String apiUrl;
+    private String apiUrl;                      // TODO: add redirect workflow for fetching authToken from frontend (with redirect URL)
 }
