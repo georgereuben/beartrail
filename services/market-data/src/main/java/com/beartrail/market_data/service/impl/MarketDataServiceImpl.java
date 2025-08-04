@@ -6,7 +6,6 @@ import com.beartrail.market_data.repository.MarketDataRepository;
 import com.beartrail.market_data.service.MarketDataCacheService;
 import com.beartrail.market_data.service.MarketDataService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

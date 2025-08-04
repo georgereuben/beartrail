@@ -30,63 +30,63 @@ services:
     networks:
       - beartrail-network
 
-  # Kafka Setup
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
-    container_name: beartrail-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - beartrail-network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.4.0
-    container_name: beartrail-kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-    networks:
-      - beartrail-network
+#  # Kafka Setup
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:7.4.0
+#    container_name: beartrail-zookeeper
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    networks:
+#      - beartrail-network
+#
+#  kafka:
+#    image: confluentinc/cp-kafka:7.4.0
+#    container_name: beartrail-kafka
+#    depends_on:
+#      - zookeeper
+#    ports:
+#      - "9092:9092"
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+#    networks:
+#      - beartrail-network
 
   # Monitoring Stack
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: beartrail-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-    networks:
-      - beartrail-network
+#  prometheus:
+#    image: prom/prometheus:latest
+#    container_name: beartrail-prometheus
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#      - prometheus_data:/prometheus
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#      - '--storage.tsdb.path=/prometheus'
+#      - '--web.console.libraries=/etc/prometheus/console_libraries'
+#      - '--web.console.templates=/etc/prometheus/consoles'
+#    networks:
+#      - beartrail-network
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: beartrail-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin123
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
-    networks:
-      - beartrail-network
+#  grafana:
+#    image: grafana/grafana:latest
+#    container_name: beartrail-grafana
+#    ports:
+#      - "3000:3000"
+#    environment:
+#      GF_SECURITY_ADMIN_PASSWORD: admin123
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+#      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+#    networks:
+#      - beartrail-network
 
 volumes:
   postgres_data:

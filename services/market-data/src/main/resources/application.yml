@@ -32,4 +32,4 @@ spring:
   # Upstox API Configuration
   upstox:
     auth-token: ${UPSTOX_AUTH_TOKEN:default-token}
-    api-url: ${UPSTOX_API_URL:https://api.upstox.com/v2}
+    api-url: ${UPSTOX_API_URL:https://api.upstox.com/v3}
