@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PriceUpdateDto {
+public class PriceUpdateDto {       // represents a ohlc candle for a specific symbol at a specific time interval
     private String symbol;
     private Double lastPrice;
     private Double openPrice;
@@ -18,5 +18,5 @@ public class PriceUpdateDto {
     private Double closePrice;
     private Long volume;
     private Long timestamp;
-    private String timeInterval;        // using string to represent TimeInterval enum
+    private String timeInterval = "1d";        // using string to represent TimeInterval enum
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class CacheServiceImpl implements MarketDataCacheService {         // TODO: Implement caching logic
+public class MarketDataCacheServiceImpl implements MarketDataCacheService {         // TODO: Implement caching logic
 
     @Override
     public Optional<MarketData> get(String cacheKey) {

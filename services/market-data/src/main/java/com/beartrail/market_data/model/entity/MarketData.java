@@ -1,10 +1,12 @@
 package com.beartrail.market_data.model.entity;
 
+import com.beartrail.market_data.model.dto.PriceUpdateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -22,6 +24,9 @@ public class MarketData {
 
     @Column(name = "symbol", nullable = false)
     private String symbol;
+
+    @Column(name = "instrument_token", nullable = false)
+    private String instrumentToken;
 
     @Column(name = "last_price", nullable = false)
     private Double lastPrice;
@@ -42,9 +47,22 @@ public class MarketData {
     private Long volume;
 
     @Column(name = "timestamp", nullable = false)
-    private Long timestamp;
+    private Long timestamp;     // in ms from epoch
 
     @Enumerated(EnumType.STRING)
     @Column(name = "time_interval", nullable = false)
     private TimeInterval timeInterval;
+
+    public MarketData(String symbol, Map<String, Double> lastPrice, Map<String, String> instrumentToken, Map<String, PriceUpdateDto> prevOhlc, Map<String, PriceUpdateDto> liveOhlc, String timeInterval) {
+        this.symbol = symbol;
+        this.instrumentToken = instrumentToken.get("instrument_token");
+        this.lastPrice = lastPrice.get(symbol);
+        this.openPrice = prevOhlc.get(symbol).getOpenPrice();
+        this.highPrice = prevOhlc.get(symbol).getHighPrice();
+        this.lowPrice = prevOhlc.get(symbol).getLowPrice();
+        this.closePrice = prevOhlc.get(symbol).getClosePrice();
+        this.volume = prevOhlc.get(symbol).getVolume();
+        this.timestamp = prevOhlc.get(symbol).getTimestamp();
+        this.timeInterval = TimeInterval.fromValue(TimeInterval.valueOf(timeInterval));
+    }
 }
