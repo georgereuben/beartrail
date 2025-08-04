@@ -4,7 +4,7 @@ spring:
 
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/market_data
+    url: jdbc:postgresql://localhost:5432/marketdata
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
@@ -28,6 +28,9 @@ spring:
     consumer:
       group-id: market-data-group
       auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
   # Upstox API Configuration
   upstox:
