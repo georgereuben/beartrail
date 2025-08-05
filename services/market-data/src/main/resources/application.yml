@@ -1,40 +1,40 @@
 beartrail:
   application:
     name: market-data
-
-  # Database Configuration
-  datasource:
-    url: jdbc:postgresql://localhost:5432/market_data
-    username: postgres
-    password: password
-    driver-class-name: org.postgresql.Driver
-
-  # JPA Configuration
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
-
+    
   # Redis Configuration
   data:
     redis:
       host: localhost
       port: 6379
 
-  # Kafka Configuration
+  # Upstox API Configuration
+  upstox:
+    auth-token: ${UPSTOX_AUTH_TOKEN:eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzNENWRzUiLCJqdGkiOiI2ODkxYzNkZTY0NWM2MzQxYjAzYTY1MzkiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc1NDM4MzMyNiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzU0NDMxMjAwfQ.FueG_zhibzZG6AaBg4KVPFJGRGQ-hVNRYK8irWuq35Q}
+    base-url: ${UPSTOX_API_URL:https://api.upstox.com/v3}
+
   kafka:
-    bootstrap-servers: localhost:9092
     topics:
       market-data-updates: market-data-updates
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: market-data-group
       auto-offset-reset: earliest
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
-  # Upstox API Configuration
-  upstox:
-    auth-token: ${UPSTOX_AUTH_TOKEN:default-token}
-    api-url: ${UPSTOX_API_URL:https://api.upstox.com/v3}
+    topics:
+      market-data-updates: market-data-updates
+  datasource:
+    url: jdbc:postgresql://localhost:5432/market_data
+    username: admin
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true

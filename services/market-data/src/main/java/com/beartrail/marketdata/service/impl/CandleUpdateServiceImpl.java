@@ -45,12 +45,12 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
             int end = Math.min(i + batchSize, symbols.size());
             List<String> batchSymbols = symbols.subList(i, end);
 
-            List<MarketData> marketDataList = upstoxApiClient.getMarketData(batchSymbols, interval.name());
+            List<MarketData> marketDataList = upstoxApiClient.getMarketData(batchSymbols, interval.getValue());
 
             for (MarketData marketData : marketDataList) {
                 marketDataKafkaProducer.sendPriceUpdate(marketData.toPriceUpdateEvent(interval));
                 marketDataRepository.save(marketData);                                                  // TODO: decouple this and make it consume from market_data kafka topic
-                marketDataCacheService.cacheLatestMarketData(marketData.getSymbol(), interval.name(), marketData.toString());
+                marketDataCacheService.cacheLatestMarketData(marketData.getSymbol(), interval.getValue(), marketData.toString());
             }
         }
     }
