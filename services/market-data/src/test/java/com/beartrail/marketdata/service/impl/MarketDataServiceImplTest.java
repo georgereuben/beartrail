@@ -15,6 +15,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class MarketDataServiceImplTest {
+
+    private static final String TEST_SYMBOL = "RELIANCE";
+    private static final String TEST_INTERVAL = "ONE_MINUTE";
+
     @Mock
     private MarketDataRepository marketDataRepository;
     @Mock
@@ -29,82 +33,71 @@ class MarketDataServiceImplTest {
 
     @Test
     void getLatestMarketData_validCacheHit_returnsCachedData() {
-        String symbol = "AAPL";
-        String interval = "ONE_MINUTE";
         Long timestamp = 123L;
         MarketData mockData = mock(MarketData.class);
-        when(marketDataCacheService.get(symbol + "_" + interval)).thenReturn(Optional.of(mockData));
-        Optional<MarketData> result = marketDataService.getLatestMarketData(symbol, interval, timestamp);
+        when(marketDataCacheService.get(TEST_SYMBOL + "_" + TEST_INTERVAL)).thenReturn(Optional.of(mockData));
+        Optional<MarketData> result = marketDataService.getLatestMarketData(TEST_SYMBOL, TEST_INTERVAL, timestamp);
         assertTrue(result.isPresent());
-        verify(marketDataCacheService, times(1)).get(symbol + "_" + interval);
+        verify(marketDataCacheService, times(1)).get(TEST_SYMBOL + "_" + TEST_INTERVAL);
         verifyNoInteractions(marketDataRepository);
     }
 
     @Test
     void getLatestMarketData_validCacheMiss_repositoryHit_returnsDataAndCaches() {
-        String symbol = "AAPL";
-        String interval = "ONE_MINUTE";
         Long timestamp = 123L;
         MarketData mockData = mock(MarketData.class);
-        when(marketDataCacheService.get(symbol + "_" + interval)).thenReturn(Optional.empty());
-        when(marketDataRepository.findBySymbolAndTimeIntervalAndTimestamp(symbol, TimeInterval.ONE_MINUTE, timestamp)).thenReturn(Optional.of(mockData));
-        Optional<MarketData> result = marketDataService.getLatestMarketData(symbol, interval, timestamp);
+        when(marketDataCacheService.get(TEST_SYMBOL + "_" + TEST_INTERVAL)).thenReturn(Optional.empty());
+        when(marketDataRepository.findBySymbolAndTimeIntervalAndTimestamp(TEST_SYMBOL, TimeInterval.ONE_MINUTE, timestamp)).thenReturn(Optional.of(mockData));
+        Optional<MarketData> result = marketDataService.getLatestMarketData(TEST_SYMBOL, TEST_INTERVAL, timestamp);
         assertTrue(result.isPresent());
-        verify(marketDataCacheService).cacheLatestMarketData(eq(symbol), eq(interval), anyString());
+        verify(marketDataCacheService).cacheLatestMarketData(eq(TEST_SYMBOL), eq(TEST_INTERVAL), anyString());
     }
 
     @Test
     void getLatestMarketData_validCacheMiss_repositoryMiss_returnsEmpty() {
-        String symbol = "AAPL";
-        String interval = "ONE_MINUTE";
         Long timestamp = 123L;
-        when(marketDataCacheService.get(symbol + "_" + interval)).thenReturn(Optional.empty());
-        when(marketDataRepository.findBySymbolAndTimeIntervalAndTimestamp(symbol, TimeInterval.ONE_MINUTE, timestamp)).thenReturn(Optional.empty());
-        Optional<MarketData> result = marketDataService.getLatestMarketData(symbol, interval, timestamp);
+        when(marketDataCacheService.get(TEST_SYMBOL + "_" + TEST_INTERVAL)).thenReturn(Optional.empty());
+        when(marketDataRepository.findBySymbolAndTimeIntervalAndTimestamp(TEST_SYMBOL, TimeInterval.ONE_MINUTE, timestamp)).thenReturn(Optional.empty());
+        Optional<MarketData> result = marketDataService.getLatestMarketData(TEST_SYMBOL, TEST_INTERVAL, timestamp);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getLatestMarketData_invalidSymbol_returnsEmpty() {
-        Optional<MarketData> result = marketDataService.getLatestMarketData("", "ONE_MINUTE", 123L);
+        Optional<MarketData> result = marketDataService.getLatestMarketData("", TEST_INTERVAL, 123L);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getLatestMarketData_invalidInterval_returnsEmpty() {
-        Optional<MarketData> result = marketDataService.getLatestMarketData("AAPL", "INVALID", 123L);
+        Optional<MarketData> result = marketDataService.getLatestMarketData(TEST_SYMBOL, "INVALID", 123L);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getHistoricalMarketData_valid_returnsData() {
-        String symbol = "AAPL";
-        String interval = "ONE_MINUTE";
         List<MarketData> mockList = List.of(mock(MarketData.class));
-        when(marketDataRepository.findBySymbolAndTimeInterval(symbol, TimeInterval.ONE_MINUTE.toString())).thenReturn(mockList);
-        List<MarketData> result = marketDataService.getHistoricalMarketData(symbol, interval);
+        when(marketDataRepository.findBySymbolAndTimeInterval(TEST_SYMBOL, TimeInterval.ONE_MINUTE.toString())).thenReturn(mockList);
+        List<MarketData> result = marketDataService.getHistoricalMarketData(TEST_SYMBOL, TEST_INTERVAL);
         assertEquals(1, result.size());
     }
 
     @Test
     void getHistoricalMarketData_invalidSymbol_returnsEmptyList() {
-        List<MarketData> result = marketDataService.getHistoricalMarketData("", "ONE_MINUTE");
+        List<MarketData> result = marketDataService.getHistoricalMarketData("", TEST_INTERVAL);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getHistoricalMarketData_invalidInterval_returnsEmptyList() {
-        List<MarketData> result = marketDataService.getHistoricalMarketData("AAPL", "INVALID");
+        List<MarketData> result = marketDataService.getHistoricalMarketData(TEST_SYMBOL, "INVALID");
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getHistoricalMarketData_noData_returnsEmptyList() {
-        String symbol = "AAPL";
-        String interval = "ONE_MINUTE";
-        when(marketDataRepository.findBySymbolAndTimeInterval(symbol, TimeInterval.ONE_MINUTE.toString())).thenReturn(List.of());
-        List<MarketData> result = marketDataService.getHistoricalMarketData(symbol, interval);
+        when(marketDataRepository.findBySymbolAndTimeInterval(TEST_SYMBOL, TimeInterval.ONE_MINUTE.toString())).thenReturn(List.of());
+        List<MarketData> result = marketDataService.getHistoricalMarketData(TEST_SYMBOL, TEST_INTERVAL);
         assertTrue(result.isEmpty());
     }
 }
-

@@ -10,7 +10,7 @@ beartrail:
 
   # Upstox API Configuration
   upstox:
-    auth-token: ${UPSTOX_AUTH_TOKEN:eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzNENWRzUiLCJqdGkiOiI2ODkxYzNkZTY0NWM2MzQxYjAzYTY1MzkiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc1NDM4MzMyNiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzU0NDMxMjAwfQ.FueG_zhibzZG6AaBg4KVPFJGRGQ-hVNRYK8irWuq35}
+    auth-token: ${UPSTOX_AUTH_TOKEN:eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzNENWRzUiLCJqdGkiOiI2ODkyY2VmMjEzNTg1ZDVkN2RlMzQ0ZGUiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc1NDQ1MTY5OCwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzU0NTE3NjAwfQ.jSrIx6SXaK5RBc-EmrjFWJAfBfVmEt3qvgsrtbbzr28}
     base-url: ${UPSTOX_API_URL:https://api.upstox.com/v3}
 
   kafka:

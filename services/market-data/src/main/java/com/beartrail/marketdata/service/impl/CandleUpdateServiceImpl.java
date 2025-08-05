@@ -40,15 +40,14 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
             throw new RuntimeException("No instrument keys found for the given interval: " + interval);
         }
         //process symbols in batches of 500
-        int batchSize = 500;
-        for (int i = 0; i < symbols.size(); i += batchSize) {
-            int end = Math.min(i + batchSize, symbols.size());
+        for (int i = 0; i < symbols.size(); i += 500) {
+            int end = Math.min(i + 500, symbols.size());
             List<String> batchSymbols = symbols.subList(i, end);
 
             List<MarketData> marketDataList = upstoxApiClient.getMarketData(batchSymbols, interval.getValue());
 
             for (MarketData marketData : marketDataList) {
-                marketDataKafkaProducer.sendPriceUpdate(marketData.toPriceUpdateEvent(interval));
+                marketDataKafkaProducer.sendPriceUpdate(marketData.toPriceUpdateEvent());
                 marketDataRepository.save(marketData);                                                  // TODO: decouple this and make it consume from market_data kafka topic
                 marketDataCacheService.cacheLatestMarketData(marketData.getSymbol(), interval.getValue(), marketData.toString());
             }

@@ -1,6 +1,7 @@
 package com.beartrail.user.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.beartrail.user.TestConstants;
 import com.beartrail.user.dto.AuthResponse;
 import com.beartrail.user.dto.LoginRequest;
 import com.beartrail.user.dto.UserRegistrationRequest;
@@ -79,14 +80,14 @@ class AuthFlowIntegrationTest {
 
         // Prepare test data
         registrationRequest = new UserRegistrationRequest();
-        registrationRequest.setFirstName("John");
-        registrationRequest.setLastName("Doe");
-        registrationRequest.setEmail("john.doe@example.com");
-        registrationRequest.setPassword("password123");
+        registrationRequest.setFirstName(TestConstants.TEST_FIRST_NAME);
+        registrationRequest.setLastName(TestConstants.TEST_LAST_NAME);
+        registrationRequest.setEmail(TestConstants.TEST_EMAIL);
+        registrationRequest.setPassword(TestConstants.TEST_PASSWORD);
 
         loginRequest = new LoginRequest();
-        loginRequest.setEmail("john.doe@example.com");
-        loginRequest.setPassword("password123");
+        loginRequest.setEmail(TestConstants.TEST_EMAIL);
+        loginRequest.setPassword(TestConstants.TEST_PASSWORD);
     }
 
     @Test
@@ -100,9 +101,9 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("User registered successfully"))
                 .andExpect(jsonPath("$.userId").exists())
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
-                .andExpect(jsonPath("$.email").value("john.doe@example.com"))
+                .andExpect(jsonPath("$.firstName").value(TestConstants.TEST_FIRST_NAME))
+                .andExpect(jsonPath("$.lastName").value(TestConstants.TEST_LAST_NAME))
+                .andExpect(jsonPath("$.email").value(TestConstants.TEST_EMAIL))
                 .andReturn();
 
         // Force database synchronization after registration
@@ -110,7 +111,7 @@ class AuthFlowIntegrationTest {
         entityManager.clear();
 
         // Verify user exists in database
-        assertTrue(userRepository.findByEmail("john.doe@example.com").isPresent());
+        assertTrue(userRepository.findByEmail(TestConstants.TEST_EMAIL).isPresent());
 
         // Step 2: Login with the registered user
         mockMvc.perform(post("/api/auth/login")
@@ -125,9 +126,9 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.expiresIn").exists())
                 .andExpect(jsonPath("$.userId").exists())
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
-                .andExpect(jsonPath("$.email").value("john.doe@example.com"))
+                .andExpect(jsonPath("$.firstName").value(TestConstants.TEST_FIRST_NAME))
+                .andExpect(jsonPath("$.lastName").value(TestConstants.TEST_LAST_NAME))
+                .andExpect(jsonPath("$.email").value(TestConstants.TEST_EMAIL))
                 .andExpect(jsonPath("$.enabled").value(true));
     }
 
@@ -160,7 +161,7 @@ class AuthFlowIntegrationTest {
 
         // Try to login with wrong password
         LoginRequest wrongPasswordRequest = new LoginRequest();
-        wrongPasswordRequest.setEmail("john.doe@example.com");
+        wrongPasswordRequest.setEmail(TestConstants.TEST_EMAIL);
         wrongPasswordRequest.setPassword("wrongPassword");
 
         mockMvc.perform(post("/api/auth/login")
@@ -216,7 +217,7 @@ class AuthFlowIntegrationTest {
                 .andExpect(status().isOk());
 
         // Verify user has correct role
-        User savedUser = userRepository.findByEmail("john.doe@example.com").orElseThrow();
+        User savedUser = userRepository.findByEmail(TestConstants.TEST_EMAIL).orElseThrow();
         assertNotNull(savedUser.getRoles());
         assertEquals(1, savedUser.getRoles().size());
         assertTrue(savedUser.getRoles().stream().anyMatch(role -> role.getName() == RoleName.ROLE_USER));
@@ -232,7 +233,7 @@ class AuthFlowIntegrationTest {
                 .andExpect(status().isOk());
 
         // Verify password is encoded
-        User savedUser = userRepository.findByEmail("john.doe@example.com").orElseThrow();
+        User savedUser = userRepository.findByEmail(TestConstants.TEST_EMAIL).orElseThrow();
         assertNotEquals("password123", savedUser.getPassword());
         assertTrue(passwordEncoder.matches("password123", savedUser.getPassword()));
     }
@@ -265,12 +266,12 @@ class AuthFlowIntegrationTest {
 
     private void createTestUser() {
         // Check if user already exists, if so delete it first
-        userRepository.findByEmail("john.doe@example.com").ifPresent(userRepository::delete);
+        userRepository.findByEmail(TestConstants.TEST_EMAIL).ifPresent(userRepository::delete);
 
         User user = new User();
         user.setFirstName("John");
         user.setLastName("Doe");
-        user.setEmail("john.doe@example.com");
+        user.setEmail(TestConstants.TEST_EMAIL);
         user.setPassword(passwordEncoder.encode("password123"));
         user.setEnabled(true);
         user.setLocked(false);

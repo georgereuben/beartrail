@@ -22,12 +22,12 @@ public class CandleUpdateScheduler {
         log.info("Completed one minute candle update for all intervals");
     }
 
-    @Scheduled(cron = "0 0/5 * * * ?") // Runs every 5 minutes
-    public void fiveMinuteCandleUpdate() {
-        log.info("Starting candle update for all intervals");
-        candleUpdateService.updateCandlesForInterval(TimeInterval.FIVE_MINUTES);
-        log.info("Completed candle update for all intervals");
-    }
+//    @Scheduled(cron = "0 0/5 * * * ?") // Runs every 5 minutes
+//    public void fiveMinuteCandleUpdate() {
+//        log.info("Starting candle update for all intervals");
+//        candleUpdateService.updateCandlesForInterval(TimeInterval.FIVE_MINUTES);
+//        log.info("Completed candle update for all intervals");
+//    }
 
     @Scheduled(cron = "0 0/30 * * * ?") // Runs every 30 minutes
     public void thirtyMinuteCandleUpdate() {

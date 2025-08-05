@@ -1,5 +1,6 @@
 package com.beartrail.user.repository;
 
+import com.beartrail.user.TestConstants;
 import com.beartrail.user.model.Role;
 import com.beartrail.user.model.RoleName;
 import com.beartrail.user.model.User;
@@ -47,9 +48,9 @@ class UserRepositoryTest {
 
         // Create test user
         testUser = new User();
-        testUser.setFirstName("John");
-        testUser.setLastName("Doe");
-        testUser.setEmail("john.doe@example.com");
+        testUser.setFirstName(TestConstants.TEST_FIRST_NAME);
+        testUser.setLastName(TestConstants.TEST_LAST_NAME);
+        testUser.setEmail(TestConstants.TEST_EMAIL);
         testUser.setPassword("encodedPassword");
         testUser.setEnabled(true);
         testUser.setEmailVerified(true);
@@ -63,9 +64,9 @@ class UserRepositoryTest {
 
         // Then
         assertNotNull(savedUser.getId());
-        assertEquals("John", savedUser.getFirstName());
-        assertEquals("Doe", savedUser.getLastName());
-        assertEquals("john.doe@example.com", savedUser.getEmail());
+        assertEquals(TestConstants.TEST_FIRST_NAME, savedUser.getFirstName());
+        assertEquals(TestConstants.TEST_LAST_NAME, savedUser.getLastName());
+        assertEquals(TestConstants.TEST_EMAIL, savedUser.getEmail());
         assertTrue(savedUser.isEnabled());
         assertTrue(savedUser.isEmailVerified());
         assertEquals(1, savedUser.getRoles().size());

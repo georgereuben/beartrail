@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -19,14 +18,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MarketData {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
 
+    @Id
     @Column(name = "symbol", nullable = true)
     private String symbol;
 
-    @Column(name = "instrument_token", nullable = true)
+    @Column(name = "instrument_token", nullable = true)         // TODO: change nullables back to false
     private String instrumentToken;
 
     @Column(name = "last_price", nullable = true)
@@ -50,29 +47,26 @@ public class MarketData {
     @Column(name = "timestamp", nullable = true)
     private Long timestamp;     // in ms from epoch
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "time_interval", nullable = true)           // TODO: make separate tables for each time interval
-    private TimeInterval timeInterval;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "time_interval", nullable = true)           // TODO: make separate tables for each time interval
+//    private TimeInterval timeInterval;
 
-    public MarketData(String symbol, Map<String, Double> lastPrice, Map<String, String> instrumentToken, Map<String, PriceUpdateDto> prevOhlc, Map<String, PriceUpdateDto> liveOhlc, String timeInterval) {
+    public MarketData(String symbol, Double lastPrice, String instrumentToken, PriceUpdateDto prevOhlc, PriceUpdateDto liveOhlc) {
         this.symbol = symbol;
-        this.instrumentToken = instrumentToken != null ? instrumentToken.get("instrument_token") : null;
-        this.lastPrice = lastPrice != null ? lastPrice.get(symbol) : null;
+        this.instrumentToken = instrumentToken;
+        this.lastPrice = lastPrice;
 
-        if (prevOhlc != null && prevOhlc.get(symbol) != null) {
-            PriceUpdateDto prevData = prevOhlc.get(symbol);
-            this.openPrice = prevData.getOpenPrice();
-            this.highPrice = prevData.getHighPrice();
-            this.lowPrice = prevData.getLowPrice();
-            this.closePrice = prevData.getClosePrice();
-            this.volume = prevData.getVolume();
-            this.timestamp = prevData.getTimestamp();
+        if (prevOhlc != null) {
+            this.openPrice = prevOhlc.getOpenPrice();
+            this.highPrice = prevOhlc.getHighPrice();
+            this.lowPrice = prevOhlc.getLowPrice();
+            this.closePrice = prevOhlc.getClosePrice();
+            this.volume = prevOhlc.getVolume();
+            this.timestamp = prevOhlc.getTimestamp();
         }
-
-        this.timeInterval = timeInterval != null ? TimeInterval.fromValue(TimeInterval.valueOf(timeInterval)) : null;
     }
 
-    public PriceUpdateEvent toPriceUpdateEvent(TimeInterval interval) {
+    public PriceUpdateEvent toPriceUpdateEvent() {
         return PriceUpdateEvent.builder()
                 .symbol(this.symbol)
                 .lastPrice(this.lastPrice)
@@ -82,7 +76,6 @@ public class MarketData {
                 .closePrice(this.closePrice)
                 .volume(this.volume)
                 .timestamp(this.timestamp)
-                .timeInterval(interval.name())
                 .build();
     }
 }

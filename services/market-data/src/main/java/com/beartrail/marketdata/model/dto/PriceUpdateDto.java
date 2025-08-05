@@ -1,5 +1,6 @@
 package com.beartrail.marketdata.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,13 +11,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PriceUpdateDto {       // represents a ohlc candle for a specific symbol at a specific time interval
-    private String symbol;
-    private Double lastPrice;
+    @JsonProperty("open")
     private Double openPrice;
+    @JsonProperty("high")
     private Double highPrice;
+    @JsonProperty("low")
     private Double lowPrice;
+    @JsonProperty("close")
     private Double closePrice;
+    @JsonProperty("volume")
     private Long volume;
-    private Long timestamp;
-    private String timeInterval;        // using string to represent TimeInterval enum
+    @JsonProperty("ts")
+    private Long timestamp; // in ms from epoch
 }

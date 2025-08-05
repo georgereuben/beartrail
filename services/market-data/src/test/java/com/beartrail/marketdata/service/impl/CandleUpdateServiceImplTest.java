@@ -8,6 +8,7 @@ import com.beartrail.marketdata.client.upstox.UpstoxApiClient;
 import com.beartrail.marketdata.service.MarketDataKafkaProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Mockito;
@@ -18,6 +19,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class CandleUpdateServiceImplTest {
+
+    private static final String TEST_SYMBOL = "RELIANCE";
+
     @Mock
     private MarketDataServiceImpl marketDataService;
     @Mock
@@ -30,45 +34,30 @@ class CandleUpdateServiceImplTest {
     private InstrumentKeyLoader instrumentKeyLoader;
     @Mock
     private MarketDataKafkaProducer marketDataKafkaProducer;
+
+    @InjectMocks
     private CandleUpdateServiceImpl candleUpdateService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        candleUpdateService = new CandleUpdateServiceImpl();
-        injectField("instrumentKeyLoader", instrumentKeyLoader);
-        injectField("upstoxApiClient", upstoxApiClient);
-        injectField("marketDataRepository", marketDataRepository);
-        injectField("marketDataCacheService", marketDataCacheService);
-        injectField("marketDataService", marketDataService);
-        injectField("marketDataKafkaProducer", marketDataKafkaProducer);
-    }
-
-    private void injectField(String fieldName, Object mock) {
-        try {
-            java.lang.reflect.Field field = CandleUpdateServiceImpl.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(candleUpdateService, mock);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Test
     void updateCandlesForInterval_validInterval_processesBatchesAndSavesData() {
         TimeInterval interval = TimeInterval.ONE_MINUTE;
-        List<String> symbols = Arrays.asList("RELIANCE", "TCS");
+        List<String> symbols = Arrays.asList(TEST_SYMBOL, "TCS");
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         MarketData marketData1 = mock(MarketData.class);
         MarketData marketData2 = mock(MarketData.class);
-        when(marketData1.getSymbol()).thenReturn("RELIANCE");
+        when(marketData1.getSymbol()).thenReturn(TEST_SYMBOL);
         when(marketData2.getSymbol()).thenReturn("TCS");
         List<MarketData> marketDataList = Arrays.asList(marketData1, marketData2);
         when(upstoxApiClient.getMarketData(symbols, "I1")).thenReturn(marketDataList);
         candleUpdateService.updateCandlesForInterval(interval);
         verify(upstoxApiClient).getMarketData(symbols, "I1");
         verify(marketDataRepository, times(2)).save(any(MarketData.class));
-        verify(marketDataCacheService).cacheLatestMarketData(eq("RELIANCE"), eq("I1"), anyString());
+        verify(marketDataCacheService).cacheLatestMarketData(eq(TEST_SYMBOL), eq("I1"), anyString());
         verify(marketDataCacheService).cacheLatestMarketData(eq("TCS"), eq("I1"), anyString());
     }
 
@@ -79,18 +68,18 @@ class CandleUpdateServiceImplTest {
 
     @Test
     void updateCandlesForInterval_emptyInstrumentKeys_throwsException() {
-        TimeInterval interval = TimeInterval.ONE_MINUTE;
+        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(Collections.emptyList());
-        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(interval));
+        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(testInterval));
     }
 
     @Test
     void updateCandlesForInterval_marketDataListEmpty_noException() {
-        TimeInterval interval = TimeInterval.ONE_MINUTE;
-        List<String> symbols = Arrays.asList("RELIANCE");
+        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
+        List<String> symbols = Arrays.asList(TEST_SYMBOL);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         when(upstoxApiClient.getMarketData(symbols, "I1")).thenReturn(Collections.emptyList());
-        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForInterval(interval));
+        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForInterval(testInterval));
         verify(upstoxApiClient).getMarketData(symbols, "I1");
         verifyNoInteractions(marketDataRepository);
         verifyNoInteractions(marketDataCacheService);
@@ -98,30 +87,30 @@ class CandleUpdateServiceImplTest {
 
     @Test
     void updateCandlesForInterval_batchProcessing_worksForLargeSymbolList() {
-        TimeInterval interval = TimeInterval.ONE_MINUTE;
+        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
         List<String> symbols = Mockito.mock(List.class);
         when(symbols.size()).thenReturn(1001);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
-        when(symbols.subList(anyInt(), anyInt())).thenReturn(Arrays.asList("RELIANCE"));
+        when(symbols.subList(anyInt(), anyInt())).thenReturn(Arrays.asList(TEST_SYMBOL));
         when(upstoxApiClient.getMarketData(anyList(), eq("I1"))).thenReturn(Arrays.asList(mock(MarketData.class)));
-        candleUpdateService.updateCandlesForInterval(interval);
+        candleUpdateService.updateCandlesForInterval(testInterval);
         verify(upstoxApiClient, atLeastOnce()).getMarketData(anyList(), eq("I1"));
     }
 
     @Test
     void updateCandlesForInterval_marketDataRepositoryThrows_exceptionPropagates() {
-        TimeInterval interval = TimeInterval.ONE_MINUTE;
-        List<String> symbols = Arrays.asList("RELIANCE");
+        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
+        List<String> symbols = Arrays.asList(TEST_SYMBOL);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         MarketData marketData = mock(MarketData.class);
         when(upstoxApiClient.getMarketData(symbols, "I1")).thenReturn(Arrays.asList(marketData));
         doThrow(new RuntimeException("DB error")).when(marketDataRepository).save(any(MarketData.class));
-        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(interval));
+        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(testInterval));
     }
 
     @Test
     void updateCandlesForSymbol_noLogic_noException() {
-        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForSymbol("RELIANCE", TimeInterval.ONE_MINUTE));
+        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForSymbol(TEST_SYMBOL, TimeInterval.ONE_MINUTE));
     }
 
     @Test

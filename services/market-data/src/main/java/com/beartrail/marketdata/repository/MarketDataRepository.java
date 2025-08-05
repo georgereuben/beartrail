@@ -12,11 +12,10 @@ import java.util.UUID;
 @Repository
 public interface MarketDataRepository extends JpaRepository<MarketData, UUID> {
 
-    List<MarketData> findBySymbolAndTimeInterval(String symbol, String timeInterval);
+    List<MarketData> findBySymbol(String symbol);
 
-    Optional<MarketData> findBySymbolAndTimeIntervalAndTimestamp(
+    Optional<MarketData> findBySymbolAndTimestamp(
             String symbol,
-            TimeInterval interval,
             Long timestamp
     );
 }

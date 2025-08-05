@@ -1,6 +1,7 @@
 package com.beartrail.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.beartrail.user.TestConstants;
 import com.beartrail.user.dto.AuthResponse;
 import com.beartrail.user.dto.LoginRequest;
 import com.beartrail.user.dto.UserRegistrationRequest;
@@ -55,14 +56,14 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         validLoginRequest = new LoginRequest();
-        validLoginRequest.setEmail("john.doe@example.com");
-        validLoginRequest.setPassword("password123");
+        validLoginRequest.setEmail(TestConstants.TEST_EMAIL);
+        validLoginRequest.setPassword(TestConstants.TEST_PASSWORD);
 
         validRegistrationRequest = new UserRegistrationRequest();
-        validRegistrationRequest.setFirstName("John");
-        validRegistrationRequest.setLastName("Doe");
-        validRegistrationRequest.setEmail("john.doe@example.com");
-        validRegistrationRequest.setPassword("password123");
+        validRegistrationRequest.setFirstName(TestConstants.TEST_FIRST_NAME);
+        validRegistrationRequest.setLastName(TestConstants.TEST_LAST_NAME);
+        validRegistrationRequest.setEmail(TestConstants.TEST_EMAIL);
+        validRegistrationRequest.setPassword(TestConstants.TEST_PASSWORD);
 
         testUser = new User();
         testUser.setId(1L);

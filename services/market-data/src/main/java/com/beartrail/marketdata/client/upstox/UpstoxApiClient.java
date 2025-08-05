@@ -4,6 +4,7 @@ import com.beartrail.marketdata.config.UpstoxConfig;
 import com.beartrail.marketdata.model.dto.DataDto;
 import com.beartrail.marketdata.model.dto.LatestMarketDataResponseDto;
 import com.beartrail.marketdata.model.entity.MarketData;
+import com.beartrail.marketdata.model.entity.TimeInterval;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -50,14 +51,12 @@ public class UpstoxApiClient {
                     .map(entry -> {
                         String symbol = entry.getKey();
                         DataDto dataDto = entry.getValue();
-                        dataDto.setSymbol(symbol);
                         return new MarketData(
-                                dataDto.getSymbol(),
+                                symbol,
                                 dataDto.getLastPrice(),
                                 dataDto.getInstrumentToken(),
                                 dataDto.getPrevOhlc(),
-                                dataDto.getLiveOhlc(),
-                                dataDto.getTimeInterval() // Assuming that interval is part of DataDto for now
+                                dataDto.getLiveOhlc()
                         );
                     }).toList();
         } catch (Exception e) {

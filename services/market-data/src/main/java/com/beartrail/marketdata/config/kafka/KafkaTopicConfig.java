@@ -20,7 +20,7 @@ public class KafkaTopicConfig {
     private String bootstrapServers;
 
     @Value("${beartrail.kafka.topics.market-data-updates}")
-    private String marketDataUpdatesTopic;
+    private String marketDataUpdatesTopicName;
 
     @Value("${beartrail.kafka.partitions:3}")
     private int partitions;
@@ -36,8 +36,8 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic marketDataUpdatesTopic() {
-        return TopicBuilder.name(marketDataUpdatesTopic)
+    public NewTopic buildMarketDataUpdatesTopic() {
+        return TopicBuilder.name(marketDataUpdatesTopicName)
                 .partitions(partitions)
                 .replicas(replicationFactor)
                 .config("retention.ms", "86400000") // 24 hours retention
