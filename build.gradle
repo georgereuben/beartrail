@@ -1,7 +1,9 @@
 plugins {
     id 'java'
+    id 'checkstyle'
     id 'org.springframework.boot' version '3.5.3' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'com.github.spotbugs' version '6.0.7' apply false
 }
 
 // Global properties for all projects
@@ -18,6 +20,9 @@ allprojects {
 // Configuration for all subprojects
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'checkstyle'
+    apply plugin: 'pmd'
+    apply plugin: 'com.github.spotbugs'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -26,6 +31,23 @@ subprojects {
 
     test {
         useJUnitPlatform()
+    }
+
+    checkstyle {
+        toolVersion = '10.12.4'
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    }
+
+    pmd {
+        toolVersion = '6.55.0'
+        ignoreFailures = false
+        consoleOutput = true
+    }
+
+    spotbugs {
+        toolVersion = '4.8.3'
+        ignoreFailures = false
+        showProgress = true
     }
 }
 
