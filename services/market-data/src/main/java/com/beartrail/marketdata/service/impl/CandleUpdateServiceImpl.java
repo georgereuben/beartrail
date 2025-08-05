@@ -6,6 +6,7 @@ import com.beartrail.marketdata.model.entity.TimeInterval;
 import com.beartrail.marketdata.repository.MarketDataRepository;
 import com.beartrail.marketdata.service.CandleUpdateService;
 import com.beartrail.marketdata.service.InstrumentKeyLoader;
+import com.beartrail.marketdata.service.MarketDataKafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,8 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
     private UpstoxApiClient upstoxApiClient;
     @Autowired
     private InstrumentKeyLoader instrumentKeyLoader;
+    @Autowired
+    private MarketDataKafkaProducer marketDataKafkaProducer;
 
     @Override
     public void updateCandlesForInterval(TimeInterval interval) {
@@ -45,6 +48,7 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
             List<MarketData> marketDataList = upstoxApiClient.getMarketData(batchSymbols, interval.name());
 
             for (MarketData marketData : marketDataList) {
+                marketDataKafkaProducer.sendPriceUpdate(marketData.toPriceUpdateEvent(interval));
                 marketDataRepository.save(marketData);
                 marketDataCacheService.cacheLatestMarketData(marketData.getSymbol(), interval.name(), marketData.toString());
             }
@@ -54,11 +58,6 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
     @Override
     public void updateCandlesForSymbol(String symbol, TimeInterval interval) {
 
-    }
-
-    @Override
-    public List<String> getActiveSymbols() {
-        return List.of();
     }
 
     @Override

@@ -10,7 +10,5 @@ public interface CandleUpdateService {
 
     void updateCandlesForSymbol(String symbol, TimeInterval interval);
 
-    List<String> getActiveSymbols();
-
     long calculateCompletedIntervalTimestamp(TimeInterval interval);
 }

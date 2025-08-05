@@ -1,5 +1,6 @@
 package com.beartrail.marketdata.model.entity;
 
+import com.beartrail.marketdata.event.publisher.PriceUpdateEvent;
 import com.beartrail.marketdata.model.dto.PriceUpdateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -64,5 +65,19 @@ public class MarketData {
         this.volume = prevOhlc.get(symbol).getVolume();
         this.timestamp = prevOhlc.get(symbol).getTimestamp();
         this.timeInterval = TimeInterval.fromValue(TimeInterval.valueOf(timeInterval));
+    }
+
+    public PriceUpdateEvent toPriceUpdateEvent(TimeInterval interval) {
+        return PriceUpdateEvent.builder()
+                .symbol(this.symbol)
+                .lastPrice(this.lastPrice)
+                .openPrice(this.openPrice)
+                .highPrice(this.highPrice)
+                .lowPrice(this.lowPrice)
+                .closePrice(this.closePrice)
+                .volume(this.volume)
+                .timestamp(this.timestamp)
+                .timeInterval(interval.name())
+                .build();
     }
 }

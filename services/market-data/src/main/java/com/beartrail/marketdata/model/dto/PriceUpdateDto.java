@@ -18,5 +18,5 @@ public class PriceUpdateDto {       // represents a ohlc candle for a specific s
     private Double closePrice;
     private Long volume;
     private Long timestamp;
-    private String timeInterval = "1d";        // using string to represent TimeInterval enum
+    private String timeInterval;        // using string to represent TimeInterval enum
 }
