@@ -51,7 +51,7 @@ public class MarketData {
     private Long timestamp;     // in ms from epoch
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "time_interval", nullable = false)
+    @Column(name = "time_interval", nullable = false)           // TODO: make separate tables for each time interval
     private TimeInterval timeInterval;
 
     public MarketData(String symbol, Map<String, Double> lastPrice, Map<String, String> instrumentToken, Map<String, PriceUpdateDto> prevOhlc, Map<String, PriceUpdateDto> liveOhlc, String timeInterval) {

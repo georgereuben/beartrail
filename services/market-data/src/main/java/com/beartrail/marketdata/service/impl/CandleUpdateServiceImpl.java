@@ -49,7 +49,7 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
 
             for (MarketData marketData : marketDataList) {
                 marketDataKafkaProducer.sendPriceUpdate(marketData.toPriceUpdateEvent(interval));
-                marketDataRepository.save(marketData);
+                marketDataRepository.save(marketData);                                                  // TODO: decouple this and make it consume from market_data kafka topic
                 marketDataCacheService.cacheLatestMarketData(marketData.getSymbol(), interval.name(), marketData.toString());
             }
         }
