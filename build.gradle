@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.2.0' apply false
-    id 'io.spring.dependency-management' version '1.1.4' apply false
+    id 'org.springframework.boot' version '3.5.3' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
 }
 
 // Global properties for all projects
@@ -18,19 +18,57 @@ allprojects {
 // Configuration for all subprojects
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'org.springframework.boot'
-    apply plugin: 'io.spring.dependency-management'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    test {
+        useJUnitPlatform()
+    }
+}
+
+// Configuration for shared modules (libraries)
+configure(subprojects.findAll { it.path.startsWith(':shared:') }) {
+    apply plugin: 'java-library'
+    apply plugin: 'io.spring.dependency-management'
+
+    dependencyManagement {
+        imports {
+            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+            mavenBom 'org.testcontainers:testcontainers-bom:1.19.3'
+        }
+    }
+
+    // Disable bootJar task for shared modules
+    tasks.matching { it.name == 'bootJar' }.configureEach {
+        enabled = false
+    }
+}
+
+// Configuration for service projects only
+configure(subprojects.findAll { it.path.startsWith(':services:') }) {
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
     dependencies {
+        implementation project(':shared:common')
+        testImplementation project(':shared:test-utils')
+
         implementation 'org.springframework.boot:spring-boot-starter'
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.kafka:spring-kafka'
+        implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+        implementation 'org.springframework.boot:spring-boot-starter-validation'
+
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation 'org.testcontainers:junit-jupiter'
+
+        runtimeOnly 'org.postgresql:postgresql'
+        implementation 'org.flywaydb:flyway-core'
     }
 
     dependencyManagement {
@@ -40,24 +78,11 @@ subprojects {
         }
     }
 
-    test {
-        useJUnitPlatform()
-    }
-}
-
-// Configuration for service projects only
-configure(subprojects.findAll { it.path.startsWith(':services:') }) {
-    dependencies {
-        implementation project(':shared:common')
-        testImplementation project(':shared:test-utils')
-
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-        implementation 'org.springframework.kafka:spring-kafka'
-        implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-        implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-        runtimeOnly 'org.postgresql:postgresql'
-        implementation 'org.flywaydb:flyway-core'
+    // Only enable bootJar for services that have a main class
+    bootJar {
+        enabled = project.file('src/main/java').exists() &&
+                 project.fileTree('src/main/java').matching {
+                     include '**/*Application.java', '**/*Main.java'
+                 }.files.size() > 0
     }
 }
