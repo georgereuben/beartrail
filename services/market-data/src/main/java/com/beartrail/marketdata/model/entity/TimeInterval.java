@@ -3,13 +3,13 @@ package com.beartrail.marketdata.model.entity;
 import lombok.Getter;
 
 @Getter
-public enum TimeInterval {
-    ONE_MINUTE("1m"),
-    FIVE_MINUTES("5m"),
-    FIFTEEN_MINUTES("15m"),
-    THIRTY_MINUTES("30m"),
-    ONE_HOUR("1h"),
-    FOUR_HOURS("4h"),
+public enum TimeInterval {                  // only 1d, I1 and I30 supported by upstox api for now
+    ONE_MINUTE("I1"),
+    FIVE_MINUTES("I5"),
+    FIFTEEN_MINUTES("I15"),
+    THIRTY_MINUTES("I30"),
+    ONE_HOUR("I60"),
+    FOUR_HOURS("I240"),
     ONE_DAY("1d"),
     ONE_WEEK("1w");
 

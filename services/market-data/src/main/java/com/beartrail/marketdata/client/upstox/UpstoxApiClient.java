@@ -1,6 +1,7 @@
 package com.beartrail.marketdata.client.upstox;
 
 import com.beartrail.marketdata.config.UpstoxConfig;
+import com.beartrail.marketdata.model.dto.DataDto;
 import com.beartrail.marketdata.model.dto.LatestMarketDataResponseDto;
 import com.beartrail.marketdata.model.entity.MarketData;
 import org.springframework.http.HttpEntity;
@@ -45,15 +46,20 @@ public class UpstoxApiClient {
         }
 
         try {
-            return response.getData().stream()
-                    .map(dataDto -> new MarketData(
-                            dataDto.getSymbol(),
-                            dataDto.getLastPrice(),
-                            dataDto.getInstrumentToken(),
-                            dataDto.getPrevOhlc(),
-                            dataDto.getLiveOhlc(),
-                            dataDto.getTimeInterval() // Assuming that interval is part of DataDto for now
-                    )).toList();
+            return response.getData().entrySet().stream()
+                    .map(entry -> {
+                        String symbol = entry.getKey();
+                        DataDto dataDto = entry.getValue();
+                        dataDto.setSymbol(symbol);
+                        return new MarketData(
+                                dataDto.getSymbol(),
+                                dataDto.getLastPrice(),
+                                dataDto.getInstrumentToken(),
+                                dataDto.getPrevOhlc(),
+                                dataDto.getLiveOhlc(),
+                                dataDto.getTimeInterval() // Assuming that interval is part of DataDto for now
+                        );
+                    }).toList();
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse market data response", e);
         }

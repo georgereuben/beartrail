@@ -23,48 +23,53 @@ public class MarketData {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "symbol", nullable = false)
+    @Column(name = "symbol", nullable = true)
     private String symbol;
 
-    @Column(name = "instrument_token", nullable = false)
+    @Column(name = "instrument_token", nullable = true)
     private String instrumentToken;
 
-    @Column(name = "last_price", nullable = false)
+    @Column(name = "last_price", nullable = true)
     private Double lastPrice;
 
-    @Column(name = "open_price", nullable = false)
+    @Column(name = "open_price", nullable = true)
     private Double openPrice;
 
-    @Column(name = "high_price", nullable = false)
+    @Column(name = "high_price", nullable = true)
     private Double highPrice;
 
-    @Column(name = "low_price", nullable = false)
+    @Column(name = "low_price", nullable = true)
     private Double lowPrice;
 
-    @Column(name = "close_price", nullable = false)
+    @Column(name = "close_price", nullable = true)
     private Double closePrice;
 
-    @Column(name = "volume", nullable = false)
+    @Column(name = "volume", nullable = true)
     private Long volume;
 
-    @Column(name = "timestamp", nullable = false)
+    @Column(name = "timestamp", nullable = true)
     private Long timestamp;     // in ms from epoch
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "time_interval", nullable = false)           // TODO: make separate tables for each time interval
+    @Column(name = "time_interval", nullable = true)           // TODO: make separate tables for each time interval
     private TimeInterval timeInterval;
 
     public MarketData(String symbol, Map<String, Double> lastPrice, Map<String, String> instrumentToken, Map<String, PriceUpdateDto> prevOhlc, Map<String, PriceUpdateDto> liveOhlc, String timeInterval) {
         this.symbol = symbol;
-        this.instrumentToken = instrumentToken.get("instrument_token");
-        this.lastPrice = lastPrice.get(symbol);
-        this.openPrice = prevOhlc.get(symbol).getOpenPrice();
-        this.highPrice = prevOhlc.get(symbol).getHighPrice();
-        this.lowPrice = prevOhlc.get(symbol).getLowPrice();
-        this.closePrice = prevOhlc.get(symbol).getClosePrice();
-        this.volume = prevOhlc.get(symbol).getVolume();
-        this.timestamp = prevOhlc.get(symbol).getTimestamp();
-        this.timeInterval = TimeInterval.fromValue(TimeInterval.valueOf(timeInterval));
+        this.instrumentToken = instrumentToken != null ? instrumentToken.get("instrument_token") : null;
+        this.lastPrice = lastPrice != null ? lastPrice.get(symbol) : null;
+
+        if (prevOhlc != null && prevOhlc.get(symbol) != null) {
+            PriceUpdateDto prevData = prevOhlc.get(symbol);
+            this.openPrice = prevData.getOpenPrice();
+            this.highPrice = prevData.getHighPrice();
+            this.lowPrice = prevData.getLowPrice();
+            this.closePrice = prevData.getClosePrice();
+            this.volume = prevData.getVolume();
+            this.timestamp = prevData.getTimestamp();
+        }
+
+        this.timeInterval = timeInterval != null ? TimeInterval.fromValue(TimeInterval.valueOf(timeInterval)) : null;
     }
 
     public PriceUpdateEvent toPriceUpdateEvent(TimeInterval interval) {

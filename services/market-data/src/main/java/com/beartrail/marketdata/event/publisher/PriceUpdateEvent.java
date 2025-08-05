@@ -2,6 +2,7 @@ package com.beartrail.marketdata.event.publisher;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
 @Builder
