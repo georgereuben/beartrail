@@ -228,28 +228,24 @@ class AuthServiceTest {
     void changePassword_UserNotFound() {
         // Given
         Long userId = 999L;
-        String oldPassword = "oldPassword";
-        String newPassword = "newPassword";
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(UserNotFoundException.class, 
-                () -> authService.changePassword(userId, oldPassword, newPassword));
+                () -> authService.changePassword(userId, "oldPassword", "newPassword"));
     }
 
     @Test
     void changePassword_IncorrectOldPassword() {
         // Given
         Long userId = 1L;
-        String oldPassword = "wrongPassword";
-        String newPassword = "newPassword";
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(oldPassword, testUser.getPassword())).thenReturn(false);
+        when(passwordEncoder.matches("wrongPassword", testUser.getPassword())).thenReturn(false);
 
         // When & Then
         assertThrows(BadCredentialsException.class, 
-                () -> authService.changePassword(userId, oldPassword, newPassword));
+                () -> authService.changePassword(userId, "wrongPassword", "newPassword"));
     }
 }

@@ -99,7 +99,7 @@ class UserRepositoryTest {
         // Then
         assertTrue(foundUser.isPresent());
         assertEquals(savedUser.getId(), foundUser.get().getId());
-        assertEquals("john.doe@example.com", foundUser.get().getEmail());
+        assertEquals(TestConstants.TEST_EMAIL, foundUser.get().getEmail());
     }
 
     @Test
@@ -117,7 +117,7 @@ class UserRepositoryTest {
         entityManager.persistAndFlush(testUser);
 
         // When
-        Optional<User> foundUser = userRepository.findByEmail("john.doe@example.com");
+        Optional<User> foundUser = userRepository.findByEmail(TestConstants.TEST_EMAIL);
 
         // Then
         assertTrue(foundUser.isPresent());
@@ -144,7 +144,7 @@ class UserRepositoryTest {
 
         // Then
         assertTrue(foundUser.isPresent());
-        assertEquals("john.doe@example.com", foundUser.get().getEmail());
+        assertEquals(TestConstants.TEST_EMAIL, foundUser.get().getEmail());
     }
 
     @Test
@@ -153,7 +153,7 @@ class UserRepositoryTest {
         entityManager.persistAndFlush(testUser);
 
         // When
-        boolean exists = userRepository.existsByEmail("john.doe@example.com");
+        boolean exists = userRepository.existsByEmail(TestConstants.TEST_EMAIL);
 
         // Then
         assertTrue(exists);
@@ -188,7 +188,7 @@ class UserRepositoryTest {
 
         // Then
         assertEquals(2, users.size());
-        assertTrue(users.stream().anyMatch(u -> u.getEmail().equals("john.doe@example.com")));
+        assertTrue(users.stream().anyMatch(u -> u.getEmail().equals(TestConstants.TEST_EMAIL)));
         assertTrue(users.stream().anyMatch(u -> u.getEmail().equals("jane.smith@example.com")));
     }
 

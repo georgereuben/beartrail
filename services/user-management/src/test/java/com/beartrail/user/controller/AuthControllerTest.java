@@ -67,24 +67,24 @@ class AuthControllerTest {
 
         testUser = new User();
         testUser.setId(1L);
-        testUser.setFirstName("John");
-        testUser.setLastName("Doe");
-        testUser.setEmail("john.doe@example.com");
+        testUser.setFirstName(TestConstants.TEST_FIRST_NAME);
+        testUser.setLastName(TestConstants.TEST_LAST_NAME);
+        testUser.setEmail(TestConstants.TEST_EMAIL);
         testUser.setEnabled(true);
         testUser.setEmailVerified(true);
 
         successAuthResponse = AuthResponse.builder()
                 .success(true)
-                .message("Authentication successful")
+                .message(TestConstants.AUTH_SUCCESS_MESSAGE)
                 .accessToken("access-token")
                 .refreshToken("refresh-token")
                 .tokenType("Bearer")
                 .expiresIn(3600L)
                 .expiresAt(LocalDateTime.now().plusSeconds(3600))
                 .userId(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .email("john.doe@example.com")
+                .firstName(TestConstants.TEST_FIRST_NAME)
+                .lastName(TestConstants.TEST_LAST_NAME)
+                .email(TestConstants.TEST_EMAIL)
                 .roles(Set.of(RoleName.ROLE_USER))
                 .emailVerified(true)
                 .enabled(true)
@@ -98,22 +98,22 @@ class AuthControllerTest {
         when(authService.authenticate(any(LoginRequest.class))).thenReturn(successAuthResponse);
 
         // When & Then
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Authentication successful"))
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(true))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value(TestConstants.AUTH_SUCCESS_MESSAGE))
                 .andExpect(jsonPath("$.accessToken").value("access-token"))
                 .andExpect(jsonPath("$.refreshToken").value("refresh-token"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.expiresIn").value(3600))
                 .andExpect(jsonPath("$.userId").value(1))
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
-                .andExpect(jsonPath("$.email").value("john.doe@example.com"))
+                .andExpect(jsonPath("$.firstName").value(TestConstants.TEST_FIRST_NAME))
+                .andExpect(jsonPath("$.lastName").value(TestConstants.TEST_LAST_NAME))
+                .andExpect(jsonPath("$.email").value(TestConstants.TEST_EMAIL))
                 .andExpect(jsonPath("$.emailVerified").value(true))
                 .andExpect(jsonPath("$.enabled").value(true));
     }
@@ -130,14 +130,14 @@ class AuthControllerTest {
         when(authService.authenticate(any(LoginRequest.class))).thenReturn(errorResponse);
 
         // When & Then
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Authentication failed: Bad credentials"))
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value("Authentication failed: Bad credentials"))
                 .andExpect(jsonPath("$.accessToken").doesNotExist())
                 .andExpect(jsonPath("$.refreshToken").doesNotExist());
     }
@@ -150,21 +150,21 @@ class AuthControllerTest {
                 .thenThrow(new RuntimeException("Service unavailable"));
 
         // When & Then
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Service unavailable"));
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value("Service unavailable"));
     }
 
     @Test
     @WithMockUser
     void login_EmptyRequestBody() throws Exception {
         // When & Then
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -179,18 +179,18 @@ class AuthControllerTest {
                 .thenReturn(Optional.of(testUser));
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRegistrationRequest)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("User registered successfully"))
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(true))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value(TestConstants.REGISTRATION_SUCCESS_MESSAGE))
                 .andExpect(jsonPath("$.userId").value(1))
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
-                .andExpect(jsonPath("$.email").value("john.doe@example.com"));
+                .andExpect(jsonPath("$.firstName").value(TestConstants.TEST_FIRST_NAME))
+                .andExpect(jsonPath("$.lastName").value(TestConstants.TEST_LAST_NAME))
+                .andExpect(jsonPath("$.email").value(TestConstants.TEST_EMAIL));
     }
 
     @Test
@@ -198,17 +198,17 @@ class AuthControllerTest {
     void register_UserAlreadyExists() throws Exception {
         // Given
         when(userService.registerUser(any(UserRegistrationRequest.class)))
-                .thenThrow(new UserAlreadyExistsException("User already exists with email: john.doe@example.com"));
+                .thenThrow(new UserAlreadyExistsException("User already exists with email: " + TestConstants.TEST_EMAIL));
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRegistrationRequest)))
                 .andExpect(status().isConflict())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Registration failed: User already exists with email: john.doe@example.com"));
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value("Registration failed: User already exists with email: " + TestConstants.TEST_EMAIL));
     }
 
     @Test
@@ -219,14 +219,14 @@ class AuthControllerTest {
                 .thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRegistrationRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).exists());
     }
 
     @Test
@@ -237,14 +237,14 @@ class AuthControllerTest {
                 .thenThrow(new RuntimeException("Database connection failed"));
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRegistrationRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Registration failed: Database connection failed"));
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value("Registration failed: Database connection failed"));
     }
 
     @Test
@@ -253,12 +253,12 @@ class AuthControllerTest {
         // Given
         UserRegistrationRequest invalidRequest = new UserRegistrationRequest();
         invalidRequest.setFirstName(""); // Empty first name should fail validation
-        invalidRequest.setLastName("Doe");
+        invalidRequest.setLastName(TestConstants.TEST_LAST_NAME);
         invalidRequest.setEmail("invalid-email");
         invalidRequest.setPassword("");
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -269,7 +269,7 @@ class AuthControllerTest {
     @WithMockUser
     void register_MissingRequestBody() throws Exception {
         // When & Then
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))

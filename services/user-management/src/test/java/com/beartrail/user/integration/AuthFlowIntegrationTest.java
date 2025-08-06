@@ -93,18 +93,17 @@ class AuthFlowIntegrationTest {
     @Test
     void completeAuthFlow_RegisterThenLogin() throws Exception {
         // Step 1: Register a new user
-        MvcResult registrationResult = mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registrationRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("User registered successfully"))
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(true))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value(TestConstants.REGISTRATION_SUCCESS_MESSAGE))
                 .andExpect(jsonPath("$.userId").exists())
                 .andExpect(jsonPath("$.firstName").value(TestConstants.TEST_FIRST_NAME))
                 .andExpect(jsonPath("$.lastName").value(TestConstants.TEST_LAST_NAME))
-                .andExpect(jsonPath("$.email").value(TestConstants.TEST_EMAIL))
-                .andReturn();
+                .andExpect(jsonPath("$.email").value(TestConstants.TEST_EMAIL));
 
         // Force database synchronization after registration
         entityManager.flush();
@@ -114,13 +113,13 @@ class AuthFlowIntegrationTest {
         assertTrue(userRepository.findByEmail(TestConstants.TEST_EMAIL).isPresent());
 
         // Step 2: Login with the registered user
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Authentication successful"))
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(true))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value(TestConstants.AUTH_SUCCESS_MESSAGE))
                 .andExpect(jsonPath("$.accessToken").exists())
                 .andExpect(jsonPath("$.refreshToken").exists())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
@@ -135,20 +134,20 @@ class AuthFlowIntegrationTest {
     @Test
     void registerUser_DuplicateEmail_ShouldFail() throws Exception {
         // Step 1: Register first user
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registrationRequest)))
                 .andExpect(status().isOk());
 
         // Step 2: Try to register with same email
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registrationRequest)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Registration failed: Email already in use"));
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).value("Registration failed: Email already in use"));
 
         // Verify only one user exists
         assertEquals(1, userRepository.count());
@@ -163,14 +162,13 @@ class AuthFlowIntegrationTest {
         LoginRequest wrongPasswordRequest = new LoginRequest();
         wrongPasswordRequest.setEmail(TestConstants.TEST_EMAIL);
         wrongPasswordRequest.setPassword("wrongPassword");
-
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(wrongPasswordRequest)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
+                .andExpect(jsonPath(TestConstants.JSON_MESSAGE).exists())
                 .andExpect(jsonPath("$.accessToken").doesNotExist());
     }
 
@@ -178,14 +176,13 @@ class AuthFlowIntegrationTest {
     void loginWithNonExistentUser_ShouldFail() throws Exception {
         LoginRequest nonExistentUserRequest = new LoginRequest();
         nonExistentUserRequest.setEmail("nonexistent@example.com");
-        nonExistentUserRequest.setPassword("password123");
-
-        mockMvc.perform(post("/api/auth/login")
+        nonExistentUserRequest.setPassword(TestConstants.TEST_PASSWORD);
+        mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nonExistentUserRequest)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath(TestConstants.JSON_SUCCESS).value(false))
                 .andExpect(jsonPath("$.accessToken").doesNotExist());
     }
 
@@ -193,11 +190,11 @@ class AuthFlowIntegrationTest {
     void registerWithInvalidData_ShouldFail() throws Exception {
         UserRegistrationRequest invalidRequest = new UserRegistrationRequest();
         invalidRequest.setFirstName(""); // Empty first name
-        invalidRequest.setLastName("Doe");
+        invalidRequest.setLastName(TestConstants.TEST_LAST_NAME);
         invalidRequest.setEmail("invalid-email"); // Invalid email format
         invalidRequest.setPassword(""); // Empty password
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -210,7 +207,7 @@ class AuthFlowIntegrationTest {
     @Test
     void userRolesAreAssignedCorrectly() throws Exception {
         // Register user
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registrationRequest)))
@@ -226,7 +223,7 @@ class AuthFlowIntegrationTest {
     @Test
     void passwordIsProperlyEncoded() throws Exception {
         // Register user
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(TestConstants.REGISTER_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registrationRequest)))
@@ -248,7 +245,7 @@ class AuthFlowIntegrationTest {
         entityManager.clear();
 
         // Login and extract token
-        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+        MvcResult loginResult = mockMvc.perform(post(TestConstants.LOGIN_ENDPOINT)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))

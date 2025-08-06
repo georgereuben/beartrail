@@ -3,6 +3,9 @@ package com.beartrail.user;
 /**
  * Test constants to avoid string literal duplication in PMD reports.
  */
+// This class is only for test constants and is not a test class.
+// Suppress PMD warning for missing test cases.
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
 public final class TestConstants {
 
     // Test user data

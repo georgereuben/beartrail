@@ -68,18 +68,16 @@ class CandleUpdateServiceImplTest {
 
     @Test
     void updateCandlesForInterval_emptyInstrumentKeys_throwsException() {
-        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(Collections.emptyList());
-        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(testInterval));
+        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE));
     }
 
     @Test
     void updateCandlesForInterval_marketDataListEmpty_noException() {
-        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
         List<String> symbols = Arrays.asList(TEST_SYMBOL);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         when(upstoxApiClient.getMarketData(symbols, "I1")).thenReturn(Collections.emptyList());
-        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForInterval(testInterval));
+        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE));
         verify(upstoxApiClient).getMarketData(symbols, "I1");
         verifyNoInteractions(marketDataRepository);
         verifyNoInteractions(marketDataCacheService);
@@ -87,25 +85,23 @@ class CandleUpdateServiceImplTest {
 
     @Test
     void updateCandlesForInterval_batchProcessing_worksForLargeSymbolList() {
-        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
         List<String> symbols = Mockito.mock(List.class);
         when(symbols.size()).thenReturn(1001);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         when(symbols.subList(anyInt(), anyInt())).thenReturn(Arrays.asList(TEST_SYMBOL));
         when(upstoxApiClient.getMarketData(anyList(), eq("I1"))).thenReturn(Arrays.asList(mock(MarketData.class)));
-        candleUpdateService.updateCandlesForInterval(testInterval);
+        candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE);
         verify(upstoxApiClient, atLeastOnce()).getMarketData(anyList(), eq("I1"));
     }
 
     @Test
     void updateCandlesForInterval_marketDataRepositoryThrows_exceptionPropagates() {
-        TimeInterval testInterval = TimeInterval.ONE_MINUTE;
         List<String> symbols = Arrays.asList(TEST_SYMBOL);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         MarketData marketData = mock(MarketData.class);
         when(upstoxApiClient.getMarketData(symbols, "I1")).thenReturn(Arrays.asList(marketData));
         doThrow(new RuntimeException("DB error")).when(marketDataRepository).save(any(MarketData.class));
-        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(testInterval));
+        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE));
     }
 
     @Test

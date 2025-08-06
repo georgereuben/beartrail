@@ -32,7 +32,6 @@ public class MarketDataServiceImpl implements MarketDataService {
         }
 
         try {
-            TimeInterval interval = TimeInterval.valueOf(timeInterval.toUpperCase(Locale.ROOT));
             String cacheKey = String.format("%s_%s", symbol, timeInterval);
             Optional<MarketData> cachedData = marketDataCacheService.get(cacheKey);
 
@@ -65,7 +64,6 @@ public class MarketDataServiceImpl implements MarketDataService {
             return List.of();
         }
         try {
-            TimeInterval interval = TimeInterval.valueOf(timeInterval.toUpperCase(Locale.ROOT));
             List<MarketData> historicalData = marketDataRepository.findBySymbol(symbol);
             if (historicalData.isEmpty()) {
                 log.warn("No historical market data found for symbol: {}, time interval: {}", symbol, timeInterval);
