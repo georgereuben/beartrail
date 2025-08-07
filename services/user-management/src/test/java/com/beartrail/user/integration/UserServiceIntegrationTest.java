@@ -224,10 +224,10 @@ class UserServiceIntegrationTest {
         Boolean result = userService.deleteUser(userId);
 
         // Then
-        assertNull(result); // Current implementation returns null
+        assertTrue(result); // Should be true if user was deleted
 
-        // Verify user still exists in database
-        assertTrue(userRepository.findById(userId).isPresent());
+        // Verify user no longer exists in database
+        assertTrue(userRepository.findById(userId).isEmpty());
     }
 
     @Test

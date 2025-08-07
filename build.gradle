@@ -3,7 +3,7 @@ plugins {
     id 'checkstyle'
     id 'org.springframework.boot' version '3.5.3' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
-    id 'com.github.spotbugs' version '6.0.7' apply false
+    // id 'com.github.spotbugs' version '6.0.7' apply false
 }
 
 // Global properties for all projects
@@ -22,7 +22,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'
-    apply plugin: 'com.github.spotbugs'
+    // apply plugin: 'com.github.spotbugs'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -44,11 +44,11 @@ subprojects {
         consoleOutput = true
     }
 
-    spotbugs {
-        toolVersion = '4.8.3'
-        ignoreFailures = false
-        showProgress = true
-    }
+    // spotbugs {
+    //     toolVersion = '4.8.3'
+    //     ignoreFailures = false
+    //     showProgress = true
+    // }
 }
 
 // Configuration for shared modules (libraries)

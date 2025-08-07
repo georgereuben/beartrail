@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
-        user.setEmailVerified(false); // Email verification can be implemented later
+        user.setEmailVerified(false);           // TODO: implement email verification
         user.setLocked(false);
         user.setCredentialsExpired(false);
 
@@ -72,7 +72,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean deleteUser(Long id) {
-        return Boolean.FALSE;
+        if (userRepository.findById(id).isPresent()) {
+            userRepository.deleteById(id);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
