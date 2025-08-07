@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
         user.setLocked(false);
         user.setCredentialsExpired(false);
 
-        // Create a new HashSet and add the role
+        // Create a new HashSet and add the role, since old version was failing spotbugs
         Set<Role> roles = new HashSet<>();
         roles.add(userRole);
         user.setRoles(roles);
@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Boolean deleteUser(Long id) {
-        return null;
+        return Boolean.FALSE;
     }
 
     @Override
