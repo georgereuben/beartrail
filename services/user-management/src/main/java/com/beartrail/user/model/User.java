@@ -8,11 +8,10 @@ import lombok.NoArgsConstructor;
 import java.util.HashSet;
 import java.util.Set;
 
-@AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = "users")          // using all argscontructor was failing spotbugs
 public class User {
 
     @Id
@@ -43,4 +42,25 @@ public class User {
     private boolean locked = false;
     private boolean credentialsExpired = false;
     private boolean emailVerified = false;
+
+    public User(Long id, String firstName, String lastName, String email, String password, Set<Role> roles, boolean enabled, boolean locked, boolean credentialsExpired, boolean emailVerified) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+        this.roles = roles == null ? new HashSet<>() : new HashSet<>(roles);
+        this.enabled = enabled;
+        this.locked = locked;
+        this.credentialsExpired = credentialsExpired;
+        this.emailVerified = emailVerified;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles == null ? new HashSet<>() : new HashSet<>(roles);
+    }
+
+    public Set<Role> getRoles() {
+        return java.util.Collections.unmodifiableSet(roles);
+    }
 }

@@ -1,5 +1,6 @@
 package com.beartrail.user.integration;
 
+import com.beartrail.user.TestConstants;
 import com.beartrail.user.dto.UserRegistrationRequest;
 import com.beartrail.user.dto.UserResponse;
 import com.beartrail.user.model.Role;
@@ -54,10 +55,10 @@ class UserServiceIntegrationTest {
 
         // Prepare test data
         registrationRequest = new UserRegistrationRequest();
-        registrationRequest.setFirstName("John");
-        registrationRequest.setLastName("Doe");
-        registrationRequest.setEmail("john.doe@example.com");
-        registrationRequest.setPassword("password123");
+        registrationRequest.setFirstName(TestConstants.TEST_FIRST_NAME);
+        registrationRequest.setLastName(TestConstants.TEST_LAST_NAME);
+        registrationRequest.setEmail(TestConstants.TEST_EMAIL);
+        registrationRequest.setPassword(TestConstants.TEST_PASSWORD);
     }
 
     @Test
@@ -71,11 +72,11 @@ class UserServiceIntegrationTest {
 
         // Verify user data
         assertNotNull(savedUser.getId());
-        assertEquals("John", savedUser.getFirstName());
-        assertEquals("Doe", savedUser.getLastName());
-        assertEquals("john.doe@example.com", savedUser.getEmail());
-        assertNotEquals("password123", savedUser.getPassword()); // Should be encoded
-        assertTrue(passwordEncoder.matches("password123", savedUser.getPassword()));
+        assertEquals(TestConstants.TEST_FIRST_NAME, savedUser.getFirstName());
+        assertEquals(TestConstants.TEST_LAST_NAME, savedUser.getLastName());
+        assertEquals(TestConstants.TEST_EMAIL, savedUser.getEmail());
+        assertNotEquals(TestConstants.TEST_PASSWORD, savedUser.getPassword()); // Should be encoded
+        assertTrue(passwordEncoder.matches(TestConstants.TEST_PASSWORD, savedUser.getPassword()));
 
         // Verify user exists in database
         Optional<User> dbUser = userRepository.findById(savedUser.getId());
@@ -96,9 +97,9 @@ class UserServiceIntegrationTest {
         // Then
         assertTrue(foundUser.isPresent());
         assertEquals(userId, foundUser.get().getId());
-        assertEquals("john.doe@example.com", foundUser.get().getEmail());
-        assertEquals("John", foundUser.get().getFirstName());
-        assertEquals("Doe", foundUser.get().getLastName());
+        assertEquals(TestConstants.TEST_EMAIL, foundUser.get().getEmail());
+        assertEquals(TestConstants.TEST_FIRST_NAME, foundUser.get().getFirstName());
+        assertEquals(TestConstants.TEST_LAST_NAME, foundUser.get().getLastName());
     }
 
     @Test
@@ -107,13 +108,13 @@ class UserServiceIntegrationTest {
         userService.registerUser(registrationRequest);
 
         // When
-        Optional<User> foundUser = userService.findUserByEmail("john.doe@example.com");
+        Optional<User> foundUser = userService.findUserByEmail(TestConstants.TEST_EMAIL);
 
         // Then
         assertTrue(foundUser.isPresent());
-        assertEquals("john.doe@example.com", foundUser.get().getEmail());
-        assertEquals("John", foundUser.get().getFirstName());
-        assertEquals("Doe", foundUser.get().getLastName());
+        assertEquals(TestConstants.TEST_EMAIL, foundUser.get().getEmail());
+        assertEquals(TestConstants.TEST_FIRST_NAME, foundUser.get().getFirstName());
+        assertEquals(TestConstants.TEST_LAST_NAME, foundUser.get().getLastName());
     }
 
     @Test
@@ -223,10 +224,10 @@ class UserServiceIntegrationTest {
         Boolean result = userService.deleteUser(userId);
 
         // Then
-        assertNull(result); // Current implementation returns null
+        assertTrue(result); // Should be true if user was deleted
 
-        // Verify user still exists in database
-        assertTrue(userRepository.findById(userId).isPresent());
+        // Verify user no longer exists in database
+        assertTrue(userRepository.findById(userId).isEmpty());
     }
 
     @Test

@@ -200,7 +200,7 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteUser_NotImplemented() {
+    void deleteUser_NotImplemented() {              // TODO: remove this
         // Given
         Long userId = 1L;
 
@@ -208,7 +208,7 @@ class UserServiceTest {
         Boolean result = userService.deleteUser(userId);
 
         // Then
-        assertNull(result); // Current implementation returns null
+        assertFalse(result);
     }
 
     @Test

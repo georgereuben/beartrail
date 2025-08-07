@@ -1,7 +1,3 @@
-plugins {
-    id 'java-library'
-}
-
 description = 'Shared common utilities and DTOs for BearTrail services'
 
 dependencies {

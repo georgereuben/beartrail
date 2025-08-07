@@ -58,35 +58,35 @@ services:
       - beartrail-network
 
   # Monitoring Stack
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: beartrail-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-    networks:
-      - beartrail-network
+#  prometheus:
+#    image: prom/prometheus:latest
+#    container_name: beartrail-prometheus
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#      - prometheus_data:/prometheus
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#      - '--storage.tsdb.path=/prometheus'
+#      - '--web.console.libraries=/etc/prometheus/console_libraries'
+#      - '--web.console.templates=/etc/prometheus/consoles'
+#    networks:
+#      - beartrail-network
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: beartrail-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin123
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
-    networks:
-      - beartrail-network
+#  grafana:
+#    image: grafana/grafana:latest
+#    container_name: beartrail-grafana
+#    ports:
+#      - "3000:3000"
+#    environment:
+#      GF_SECURITY_ADMIN_PASSWORD: admin123
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+#      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+#    networks:
+#      - beartrail-network
 
 volumes:
   postgres_data:

@@ -1,0 +1,40 @@
+beartrail:
+  application:
+    name: market-data
+    
+  # Redis Configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # Upstox API Configuration
+  upstox:
+    auth-token: ${UPSTOX_AUTH_TOKEN:eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiIzNENWRzUiLCJqdGkiOiI2ODkyY2VmMjEzNTg1ZDVkN2RlMzQ0ZGUiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc1NDQ1MTY5OCwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzU0NTE3NjAwfQ.jSrIx6SXaK5RBc-EmrjFWJAfBfVmEt3qvgsrtbbzr28}
+    base-url: ${UPSTOX_API_URL:https://api.upstox.com/v3}
+
+  kafka:
+    topics:
+      market-data-updates: market-data-updates
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: market-data-group
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    topics:
+      market-data-updates: market-data-updates
+  datasource:
+    url: jdbc:postgresql://localhost:5432/market_data
+    username: admin
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true

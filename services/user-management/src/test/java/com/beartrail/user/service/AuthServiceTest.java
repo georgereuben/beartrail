@@ -1,5 +1,6 @@
 package com.beartrail.user.service;
 
+import com.beartrail.user.TestConstants;
 import com.beartrail.user.dto.AuthResponse;
 import com.beartrail.user.dto.LoginRequest;
 import com.beartrail.user.exception.UserNotFoundException;
@@ -69,17 +70,17 @@ class AuthServiceTest {
 
         testUser = new User();
         testUser.setId(1L);
-        testUser.setFirstName("John");
-        testUser.setLastName("Doe");
-        testUser.setEmail("john.doe@example.com");
+        testUser.setFirstName(TestConstants.TEST_FIRST_NAME);
+        testUser.setLastName(TestConstants.TEST_LAST_NAME);
+        testUser.setEmail(TestConstants.TEST_EMAIL);
         testUser.setPassword("encodedPassword");
         testUser.setRoles(Set.of(userRole));
         testUser.setEmailVerified(true);
         testUser.setEnabled(true);
 
         loginRequest = new LoginRequest();
-        loginRequest.setEmail("john.doe@example.com");
-        loginRequest.setPassword("password123");
+        loginRequest.setEmail(TestConstants.TEST_EMAIL);
+        loginRequest.setPassword(TestConstants.TEST_PASSWORD);
     }
 
     @Test
@@ -227,28 +228,24 @@ class AuthServiceTest {
     void changePassword_UserNotFound() {
         // Given
         Long userId = 999L;
-        String oldPassword = "oldPassword";
-        String newPassword = "newPassword";
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(UserNotFoundException.class, 
-                () -> authService.changePassword(userId, oldPassword, newPassword));
+                () -> authService.changePassword(userId, "oldPassword", "newPassword"));
     }
 
     @Test
     void changePassword_IncorrectOldPassword() {
         // Given
         Long userId = 1L;
-        String oldPassword = "wrongPassword";
-        String newPassword = "newPassword";
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(oldPassword, testUser.getPassword())).thenReturn(false);
+        when(passwordEncoder.matches("wrongPassword", testUser.getPassword())).thenReturn(false);
 
         // When & Then
         assertThrows(BadCredentialsException.class, 
-                () -> authService.changePassword(userId, oldPassword, newPassword));
+                () -> authService.changePassword(userId, "wrongPassword", "newPassword"));
     }
 }

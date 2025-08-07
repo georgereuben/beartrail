@@ -1,0 +1,21 @@
+package com.beartrail.marketdata.repository;
+
+import com.beartrail.marketdata.model.entity.MarketData;
+import com.beartrail.marketdata.model.entity.TimeInterval;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface MarketDataRepository extends JpaRepository<MarketData, UUID> {
+
+    List<MarketData> findBySymbol(String symbol);
+
+    Optional<MarketData> findBySymbolAndTimestamp(
+            String symbol,
+            Long timestamp
+    );
+}
