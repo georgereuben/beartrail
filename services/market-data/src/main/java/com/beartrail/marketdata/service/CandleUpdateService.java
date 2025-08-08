@@ -1,14 +1,12 @@
 package com.beartrail.marketdata.service;
 
-import com.beartrail.marketdata.model.entity.TimeInterval;
-
-import java.util.List;
+import com.beartrail.marketdata.model.entity.TimeFrameValue;
 
 public interface CandleUpdateService {
 
-    void updateCandlesForInterval(TimeInterval interval);
+    void updateCandlesForInterval(TimeFrameValue interval);
 
-    void updateCandlesForSymbol(String symbol, TimeInterval interval);
+    void updateCandlesForSymbol(String symbol, TimeFrameValue interval);
 
-    long calculateCompletedIntervalTimestamp(TimeInterval interval);
+    long calculateCompletedIntervalTimestamp(TimeFrameValue interval);
 }

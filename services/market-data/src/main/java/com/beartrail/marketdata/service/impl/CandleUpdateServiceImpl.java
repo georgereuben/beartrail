@@ -2,7 +2,7 @@ package com.beartrail.marketdata.service.impl;
 
 import com.beartrail.marketdata.client.upstox.UpstoxApiClient;
 import com.beartrail.marketdata.model.entity.Candle;
-import com.beartrail.marketdata.model.entity.TimeInterval;
+import com.beartrail.marketdata.model.entity.TimeFrameValue;
 import com.beartrail.marketdata.repository.MarketDataRepository;
 import com.beartrail.marketdata.service.CandleUpdateService;
 import com.beartrail.marketdata.service.InstrumentKeyLoader;
@@ -29,7 +29,7 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
     private MarketDataKafkaProducer marketDataKafkaProducer;
 
     @Override
-    public void updateCandlesForInterval(TimeInterval interval) {
+    public void updateCandlesForInterval(TimeFrameValue interval) {
         if (interval == null) {
             throw new IllegalArgumentException("Time interval cannot be null");
         }
@@ -55,12 +55,12 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
     }
 
     @Override
-    public void updateCandlesForSymbol(String symbol, TimeInterval interval) {
+    public void updateCandlesForSymbol(String symbol, TimeFrameValue interval) {
 
     }
 
     @Override
-    public long calculateCompletedIntervalTimestamp(TimeInterval interval) {
+    public long calculateCompletedIntervalTimestamp(TimeFrameValue interval) {
         return 0;
     }
 }

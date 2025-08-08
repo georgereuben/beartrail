@@ -26,16 +26,3 @@ public class TimeFrame {
     @Column(name = "value", nullable = false)
     private TimeFrameValue value; // like I1, I30, 1d
 }
-
-@Getter
-enum TimeFrameValue {
-    ONE_MINUTE("I1"),
-    THIRTY_MINUTES("I30"),
-    ONE_DAY("1d");
-
-    private final String value;
-
-    TimeFrameValue(String value) {
-        this.value = value;
-    }
-}

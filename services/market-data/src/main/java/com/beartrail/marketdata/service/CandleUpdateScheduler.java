@@ -1,6 +1,6 @@
 package com.beartrail.marketdata.service;
 
-import com.beartrail.marketdata.model.entity.TimeInterval;
+import com.beartrail.marketdata.model.entity.TimeFrameValue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,28 +18,28 @@ public class CandleUpdateScheduler {
     @Scheduled(cron = "0 0/1 * * * ?") // Runs every minute             // TODO: make these run only during market hours
     public void oneMinuteCandleUpdate() {
         log.info("Starting one minute candle update for all intervals");
-        candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE);
+        candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_MINUTE);
         log.info("Completed one minute candle update for all intervals");
     }
 
 //    @Scheduled(cron = "0 0/5 * * * ?") // Runs every 5 minutes
 //    public void fiveMinuteCandleUpdate() {
 //        log.info("Starting candle update for all intervals");
-//        candleUpdateService.updateCandlesForInterval(TimeInterval.FIVE_MINUTES);
+//        candleUpdateService.updateCandlesForInterval(TimeFrameValue.FIVE_MINUTES);
 //        log.info("Completed candle update for all intervals");
 //    }
 
     @Scheduled(cron = "0 0/30 * * * ?") // Runs every 30 minutes
     public void thirtyMinuteCandleUpdate() {
         log.info("Starting thirty minute candle update for all intervals");
-        candleUpdateService.updateCandlesForInterval(TimeInterval.THIRTY_MINUTES);
+        candleUpdateService.updateCandlesForInterval(TimeFrameValue.THIRTY_MINUTES);
         log.info("Completed thirty minute candle update for all intervals");
     }
 
     @Scheduled(cron = "0 0 0 * * ?")   // Runs daily at midnight
     public void dailyCandleUpdate() {
         log.info("Starting daily candle update for all intervals");
-        candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_DAY);
+        candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_DAY);
         log.info("Completed daily candle update for all intervals");
     }
 }

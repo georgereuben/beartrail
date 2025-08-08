@@ -1,7 +1,8 @@
 package com.beartrail.marketdata.service.impl;
 
 import com.beartrail.marketdata.model.entity.Candle;
-import com.beartrail.marketdata.model.entity.TimeInterval;
+import com.beartrail.marketdata.model.entity.TimeFrameValue;
+import com.beartrail.marketdata.model.entity.TimeFrameValue;
 import com.beartrail.marketdata.repository.MarketDataRepository;
 import com.beartrail.marketdata.service.InstrumentKeyLoader;
 import com.beartrail.marketdata.client.upstox.UpstoxApiClient;
@@ -45,7 +46,7 @@ class CandleUpdateServiceImplTest {
 
     @Test
     void updateCandlesForInterval_validInterval_processesBatchesAndSavesData() {
-        TimeInterval interval = TimeInterval.ONE_MINUTE;
+        TimeFrameValue interval = TimeFrameValue.ONE_MINUTE;
         List<String> symbols = Arrays.asList(TEST_SYMBOL, "TCS");
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         Candle candle1 = mock(Candle.class);
@@ -69,7 +70,7 @@ class CandleUpdateServiceImplTest {
     @Test
     void updateCandlesForInterval_emptyInstrumentKeys_throwsException() {
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(Collections.emptyList());
-        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE));
+        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_MINUTE));
     }
 
     @Test
@@ -77,7 +78,7 @@ class CandleUpdateServiceImplTest {
         List<String> symbols = Arrays.asList(TEST_SYMBOL);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         when(upstoxApiClient.getCandles(symbols, "I1")).thenReturn(Collections.emptyList());
-        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE));
+        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_MINUTE));
         verify(upstoxApiClient).getCandles(symbols, "I1");
         verifyNoInteractions(marketDataRepository);
         verifyNoInteractions(marketDataCacheService);
@@ -90,7 +91,7 @@ class CandleUpdateServiceImplTest {
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         when(symbols.subList(anyInt(), anyInt())).thenReturn(Arrays.asList(TEST_SYMBOL));
         when(upstoxApiClient.getCandles(anyList(), eq("I1"))).thenReturn(Arrays.asList(mock(Candle.class)));
-        candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE);
+        candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_MINUTE);
         verify(upstoxApiClient, atLeastOnce()).getCandles(anyList(), eq("I1"));
     }
 
@@ -101,17 +102,17 @@ class CandleUpdateServiceImplTest {
         Candle candle = mock(Candle.class);
         when(upstoxApiClient.getCandles(symbols, "I1")).thenReturn(Arrays.asList(candle));
         doThrow(new RuntimeException("DB error")).when(marketDataRepository).save(any(Candle.class));
-        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE));
+        assertThrows(RuntimeException.class, () -> candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_MINUTE));
     }
 
     @Test
     void updateCandlesForSymbol_noLogic_noException() {
-        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForSymbol(TEST_SYMBOL, TimeInterval.ONE_MINUTE));
+        assertDoesNotThrow(() -> candleUpdateService.updateCandlesForSymbol(TEST_SYMBOL, TimeFrameValue.ONE_MINUTE));
     }
 
     @Test
     void calculateCompletedIntervalTimestamp_returnsZero() {
-        long result = candleUpdateService.calculateCompletedIntervalTimestamp(TimeInterval.ONE_MINUTE);
+        long result = candleUpdateService.calculateCompletedIntervalTimestamp(TimeFrameValue.ONE_MINUTE);
         assertEquals(0, result);
     }
 }
