@@ -13,13 +13,8 @@ create table timeframes (
 
 insert into timeframes (name, value) values
     ('1 minute', 'I1'),
-    ('5 minutes', 'I5'),
-    ('15 minutes', 'I15'),
     ('30 minutes', 'I30'),
-    ('1 hour', 'I60'),
-    ('4 hours', 'I240'),
-    ('1 day', '1d'),
-    ('1 week', '1w');
+    ('1 day', '1d');
 
 create table ohlc_candles (
     candle_id BIGSERIAL,
