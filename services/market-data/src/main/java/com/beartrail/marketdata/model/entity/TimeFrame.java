@@ -1,7 +1,9 @@
 package com.beartrail.marketdata.model.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -10,6 +12,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
+@Table(name = "timeframes")
 public class TimeFrame {
 
     @Id
@@ -25,8 +29,8 @@ public class TimeFrame {
 
 @Getter
 enum TimeFrameValue {
-    I1("I1"),
-    I30("I30"),
+    ONE_MINUTE("I1"),
+    THIRTY_MINUTES("I30"),
     ONE_DAY("1d");
 
     private final String value;

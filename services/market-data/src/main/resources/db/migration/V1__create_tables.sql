@@ -2,7 +2,9 @@ CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
 create table stocks (
     stock_id SERIAL PRIMARY KEY,
-    instrument_token VARCHAR(64) NOT NULL UNIQUE
+    symbol VARCHAR(16) NOT NULL UNIQUE,
+    instrument_token VARCHAR(64) NOT NULL UNIQUE,
+    last_price DECIMAL(15,4) NOT NULL CHECK (last_price > 0),
 );
 
 create table timeframes (
@@ -20,7 +22,7 @@ create table ohlc_candles (
     candle_id BIGSERIAL,
     stock_id INTEGER NOT NULL REFERENCES stocks(stock_id) ON DELETE CASCADE,
     timeframe_id INTEGER NOT NULL REFERENCES timeframes(timeframe_id),
-    timestamp TIMESTAMPTZ NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL default NOW(),
     open_price DECIMAL(15,4) NOT NULL CHECK (open_price > 0),
     high_price DECIMAL(15,4) NOT NULL CHECK (high_price > 0),
     low_price DECIMAL(15,4) NOT NULL CHECK (low_price > 0),
