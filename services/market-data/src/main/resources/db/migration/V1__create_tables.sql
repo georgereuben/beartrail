@@ -2,9 +2,9 @@ CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
 create table stocks (
     stock_id SERIAL PRIMARY KEY,
-    symbol VARCHAR(16) NOT NULL UNIQUE,
+    symbol VARCHAR(64) NOT NULL UNIQUE,
     instrument_token VARCHAR(64) NOT NULL UNIQUE,
-    last_price DECIMAL(15,4) NOT NULL CHECK (last_price > 0),
+    last_price DECIMAL(15,4)
 );
 
 create table timeframes (
@@ -23,18 +23,14 @@ create table ohlc_candles (
     stock_id INTEGER NOT NULL REFERENCES stocks(stock_id) ON DELETE CASCADE,
     timeframe_id INTEGER NOT NULL REFERENCES timeframes(timeframe_id),
     timestamp TIMESTAMPTZ NOT NULL default NOW(),
-    open_price DECIMAL(15,4) NOT NULL CHECK (open_price > 0),
-    high_price DECIMAL(15,4) NOT NULL CHECK (high_price > 0),
-    low_price DECIMAL(15,4) NOT NULL CHECK (low_price > 0),
-    close_price DECIMAL(15,4) NOT NULL CHECK (close_price > 0),
-    volume BIGINT NOT NULL DEFAULT 0 CHECK (volume >= 0),
+    open_price DECIMAL(15,4) CHECK (open_price > 0),
+    high_price DECIMAL(15,4) CHECK (high_price > 0),
+    low_price DECIMAL(15,4) CHECK (low_price > 0),
+    close_price DECIMAL(15,4) CHECK (close_price > 0),
+    volume BIGINT DEFAULT 0 CHECK (volume >= 0),
     created_at TIMESTAMPTZ DEFAULT NOW(),
 
     PRIMARY KEY (stock_id, timeframe_id, timestamp),
 
-    constraint check_high_low CHECK (high_price >= low_price),
-    constraint check_ohlc_logic CHECK (
-        high_price >= open_price AND high_price >= close_price
-        AND low_price <= open_price AND low_price <= close_price
-    )
+    constraint check_high_low CHECK (high_price >= low_price)
 );

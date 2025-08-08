@@ -7,6 +7,7 @@ import com.beartrail.marketdata.service.MarketDataService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +24,7 @@ public class MarketDataServiceImpl implements MarketDataService {
     }
 
     @Override
-    public Optional<Candle> getLatestMarketData(String symbol, String timeInterval, Long timestamp) {
+    public Optional<Candle> getLatestMarketData(String symbol, String timeInterval, Instant timestamp) {
         if (symbol == null || symbol.isEmpty()) {
             log.error("Invalid stock symbol provided: {}", symbol);
             return Optional.empty();
@@ -39,7 +40,7 @@ public class MarketDataServiceImpl implements MarketDataService {
             }
 
             log.info("Cache miss for symbol: {}, time interval: {}", symbol, timeInterval);
-            Optional<Candle> marketData = marketDataRepository.findBySymbolAndTimestamp(symbol, timestamp);
+            Optional<Candle> marketData = marketDataRepository.findByStock_SymbolAndTimestamp(symbol, timestamp);
             if (marketData.isPresent()) {
                 log.info("Latest market data found for symbol: {}, time interval: {}", symbol, timeInterval);
                 marketDataCacheService.cacheLatestCandles(symbol, timeInterval, marketData.get().toString());
@@ -62,7 +63,7 @@ public class MarketDataServiceImpl implements MarketDataService {
             return List.of();
         }
         try {
-            List<Candle> historicalData = marketDataRepository.findBySymbol(symbol);
+            List<Candle> historicalData = marketDataRepository.findByStock_Symbol(symbol);
             if (historicalData.isEmpty()) {
                 log.warn("No historical market data found for symbol: {}, time interval: {}", symbol, timeInterval);
             } else {

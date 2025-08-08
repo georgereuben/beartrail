@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +35,7 @@ class MarketDataServiceImplTest {
 
     @Test
     void getLatestMarketData_validCacheHit_returnsCachedData() {
-        Long timestamp = 123L;
+        Instant timestamp = Instant.now();
         Candle mockData = mock(Candle.class);
         when(marketDataCacheService.get(TEST_SYMBOL + "_" + TEST_INTERVAL)).thenReturn(Optional.of(mockData));
         Optional<Candle> result = marketDataService.getLatestMarketData(TEST_SYMBOL, TEST_INTERVAL, timestamp);
@@ -45,10 +46,10 @@ class MarketDataServiceImplTest {
 
     @Test
     void getLatestMarketData_validCacheMiss_repositoryHit_returnsDataAndCaches() {
-        Long timestamp = 123L;
+        Instant timestamp = Instant.now();
         Candle mockData = mock(Candle.class);
         when(marketDataCacheService.get(TEST_SYMBOL + "_" + TEST_INTERVAL)).thenReturn(Optional.empty());
-        when(marketDataRepository.findBySymbolAndTimestamp(TEST_SYMBOL, timestamp)).thenReturn(Optional.of(mockData));
+        when(marketDataRepository.findByStock_SymbolAndTimestamp(TEST_SYMBOL, timestamp)).thenReturn(Optional.of(mockData));
         Optional<Candle> result = marketDataService.getLatestMarketData(TEST_SYMBOL, TEST_INTERVAL, timestamp);
         assertTrue(result.isPresent());
         verify(marketDataCacheService).cacheLatestCandles(eq(TEST_SYMBOL), eq(TEST_INTERVAL), anyString());
@@ -56,29 +57,29 @@ class MarketDataServiceImplTest {
 
     @Test
     void getLatestMarketData_validCacheMiss_repositoryMiss_returnsEmpty() {
-        Long timestamp = 123L;
+        Instant timestamp = Instant.now();
         when(marketDataCacheService.get(TEST_SYMBOL + "_" + TEST_INTERVAL)).thenReturn(Optional.empty());
-        when(marketDataRepository.findBySymbolAndTimestamp(TEST_SYMBOL, timestamp)).thenReturn(Optional.empty());
+        when(marketDataRepository.findByStock_SymbolAndTimestamp(TEST_SYMBOL, timestamp)).thenReturn(Optional.empty());
         Optional<Candle> result = marketDataService.getLatestMarketData(TEST_SYMBOL, TEST_INTERVAL, timestamp);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getLatestMarketData_invalidSymbol_returnsEmpty() {
-        Optional<Candle> result = marketDataService.getLatestMarketData("", TEST_INTERVAL, 123L);
+        Optional<Candle> result = marketDataService.getLatestMarketData("", TEST_INTERVAL, Instant.now());
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getLatestMarketData_invalidInterval_returnsEmpty() {
-        Optional<Candle> result = marketDataService.getLatestMarketData(TEST_SYMBOL, "INVALID", 123L);
+        Optional<Candle> result = marketDataService.getLatestMarketData(TEST_SYMBOL, "INVALID", Instant.now());
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getHistoricalMarketData_valid_returnsData() {
         List<Candle> mockList = List.of(mock(Candle.class));
-        when(marketDataRepository.findBySymbol(TEST_SYMBOL)).thenReturn(mockList);
+        when(marketDataRepository.findByStock_Symbol(TEST_SYMBOL)).thenReturn(mockList);
         List<Candle> result = marketDataService.getHistoricalMarketData(TEST_SYMBOL, TEST_INTERVAL);
         assertEquals(1, result.size());
     }
@@ -97,7 +98,7 @@ class MarketDataServiceImplTest {
 
     @Test
     void getHistoricalMarketData_noData_returnsEmptyList() {
-        when(marketDataRepository.findBySymbol(TEST_SYMBOL)).thenReturn(List.of());
+        when(marketDataRepository.findByStock_Symbol(TEST_SYMBOL)).thenReturn(List.of());
         List<Candle> result = marketDataService.getHistoricalMarketData(TEST_SYMBOL, TEST_INTERVAL);
         assertTrue(result.isEmpty());
     }

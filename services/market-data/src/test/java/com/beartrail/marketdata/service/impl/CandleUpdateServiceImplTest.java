@@ -51,8 +51,12 @@ class CandleUpdateServiceImplTest {
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         Candle candle1 = mock(Candle.class);
         Candle candle2 = mock(Candle.class);
-        when(candle1.getStock().getSymbol()).thenReturn(TEST_SYMBOL);
-        when(candle2.getStock().getSymbol()).thenReturn("TCS");
+        com.beartrail.marketdata.model.entity.Stock stock1 = mock(com.beartrail.marketdata.model.entity.Stock.class);
+        com.beartrail.marketdata.model.entity.Stock stock2 = mock(com.beartrail.marketdata.model.entity.Stock.class);
+        when(candle1.getStock()).thenReturn(stock1);
+        when(candle2.getStock()).thenReturn(stock2);
+        when(stock1.getSymbol()).thenReturn(TEST_SYMBOL);
+        when(stock2.getSymbol()).thenReturn("TCS");
         List<Candle> candleList = Arrays.asList(candle1, candle2);
         when(upstoxApiClient.getCandles(symbols, "I1")).thenReturn(candleList);
         candleUpdateService.updateCandlesForInterval(interval);
@@ -90,7 +94,11 @@ class CandleUpdateServiceImplTest {
         when(symbols.size()).thenReturn(1001);
         when(instrumentKeyLoader.getInstrumentKeys()).thenReturn(symbols);
         when(symbols.subList(anyInt(), anyInt())).thenReturn(Arrays.asList(TEST_SYMBOL));
-        when(upstoxApiClient.getCandles(anyList(), eq("I1"))).thenReturn(Arrays.asList(mock(Candle.class)));
+        Candle candle = mock(Candle.class);
+        com.beartrail.marketdata.model.entity.Stock stock = mock(com.beartrail.marketdata.model.entity.Stock.class);
+        when(candle.getStock()).thenReturn(stock);
+        when(stock.getSymbol()).thenReturn(TEST_SYMBOL);
+        when(upstoxApiClient.getCandles(anyList(), eq("I1"))).thenReturn(Arrays.asList(candle));
         candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_MINUTE);
         verify(upstoxApiClient, atLeastOnce()).getCandles(anyList(), eq("I1"));
     }

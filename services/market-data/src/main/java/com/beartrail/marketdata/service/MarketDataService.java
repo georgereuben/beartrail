@@ -2,6 +2,7 @@ package com.beartrail.marketdata.service;
 
 import com.beartrail.marketdata.model.entity.Candle;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +15,7 @@ public interface MarketDataService {
      * @param timestamp   The timestamp to fetch the latest data after.
      * @return A string representing the latest market data in JSON format.
      */
-    Optional<Candle> getLatestMarketData(String symbol, String timeInterval, Long timestamp);
+    Optional<Candle> getLatestMarketData(String symbol, String timeInterval, Instant timestamp);
 
     /**
      * Fetches all the historical market data for a given symbol and time interval.

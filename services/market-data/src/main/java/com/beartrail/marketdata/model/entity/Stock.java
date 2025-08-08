@@ -2,6 +2,8 @@ package com.beartrail.marketdata.model.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
@@ -12,11 +14,13 @@ import lombok.*;
 @Data
 @Entity
 @Table(name = "stocks")
+@Builder
 public class Stock extends Instrument {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)                 // TODO : check primary key of stock table should be symbol related to avoid multiple entried of the same stcok
     @Column(name = "stock_id", nullable = false)
-    private String id;
+    private Long id;
 
     @Column(name = "symbol", nullable = false, unique = true)
     private String symbol;

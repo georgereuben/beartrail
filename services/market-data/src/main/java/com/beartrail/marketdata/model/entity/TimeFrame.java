@@ -1,12 +1,8 @@
 package com.beartrail.marketdata.model.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Data
@@ -18,11 +14,16 @@ public class TimeFrame {
 
     @Id
     @Column(name = "timeframe_id", nullable = false)
-    private String id;
+    private Integer id;
 
     @Column(name = "name", nullable = false)
     private String name; // like ONE_MINUTE, THIRTY_MINUTES, ONE_DAY
 
     @Column(name = "value", nullable = false)
-    private TimeFrameValue value; // like I1, I30, 1d
+    private String value; // like I1, I30, 1d
+
+    // helper method to get tfv enum from string value
+    public TimeFrameValue getTimeFrameValue() {
+        return TimeFrameValue.fromValue(this.value);
+    }
 }

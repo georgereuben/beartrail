@@ -13,4 +13,13 @@ public enum TimeFrameValue {
     TimeFrameValue(String value) {
         this.value = value;
     }
+
+    public static TimeFrameValue fromValue(String value) {
+        for (TimeFrameValue tfv : TimeFrameValue.values()) {
+            if (tfv.getValue().equalsIgnoreCase(value)) {
+                return tfv;
+            }
+        }
+        throw new IllegalArgumentException("No TimeFrameValue for value: " + value);
+    }
 }
