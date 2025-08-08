@@ -29,9 +29,9 @@ spring:
     topics:
       market-data-updates: market-data-updates
   datasource:
-    url: jdbc:postgresql://localhost:5432/market_data
-    username: admin
-    password: password
+    url: jdbc:postgresql://localhost:5432/beartrail_market_data
+    username: beartrail
+    password: beartrail123
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

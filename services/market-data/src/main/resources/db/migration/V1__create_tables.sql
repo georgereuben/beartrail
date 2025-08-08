@@ -1,19 +1,19 @@
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
-create table stocks {
+create table stocks (
     stock_id SERIAL PRIMARY KEY,
-    instrument_token VARCHAR(64) NOT NULL UNIQUE,
-}
+    instrument_token VARCHAR(64) NOT NULL UNIQUE
+);
 
-create table timeframes {
+create table timeframes (
     timeframe_id SERIAL PRIMARY KEY,
     name VARCHAR(64) NOT NULL UNIQUE,
     value VARCHAR(64) NOT NULL UNIQUE
-}
+);
 
 insert into timeframes (name, value) values
     ('1 minute', 'I1'),
-    ('5 minutes', 'I5
+    ('5 minutes', 'I5'),
     ('15 minutes', 'I15'),
     ('30 minutes', 'I30'),
     ('1 hour', 'I60'),
@@ -22,7 +22,7 @@ insert into timeframes (name, value) values
     ('1 week', '1w');
 
 create table ohlc_candles (
-    candle_id BIGSERIAL PRIMARY KEY,
+    candle_id BIGSERIAL,
     stock_id INTEGER NOT NULL REFERENCES stocks(stock_id) ON DELETE CASCADE,
     timeframe_id INTEGER NOT NULL REFERENCES timeframes(timeframe_id),
     timestamp TIMESTAMPTZ NOT NULL,

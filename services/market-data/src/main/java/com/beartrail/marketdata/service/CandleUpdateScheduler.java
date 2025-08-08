@@ -15,7 +15,7 @@ public class CandleUpdateScheduler {
         this.candleUpdateService = candleUpdateService;
     }
 
-    @Scheduled(cron = "0 0/1 * * * ?") // Runs every minute
+    @Scheduled(cron = "0 0/1 * * * ?") // Runs every minute             // TODO: make these run only during market hours
     public void oneMinuteCandleUpdate() {
         log.info("Starting one minute candle update for all intervals");
         candleUpdateService.updateCandlesForInterval(TimeInterval.ONE_MINUTE);
