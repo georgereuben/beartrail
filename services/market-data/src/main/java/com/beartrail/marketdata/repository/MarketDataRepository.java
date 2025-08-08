@@ -1,21 +1,21 @@
 package com.beartrail.marketdata.repository;
 
-import com.beartrail.marketdata.model.entity.MarketData;
-import com.beartrail.marketdata.model.entity.TimeInterval;
+import com.beartrail.marketdata.model.entity.Candle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MarketDataRepository extends JpaRepository<MarketData, UUID> {
+public interface MarketDataRepository extends JpaRepository<Candle, UUID> {
 
-    List<MarketData> findBySymbol(String symbol);
+    List<Candle> findByStock_Symbol(String symbol);
 
-    Optional<MarketData> findBySymbolAndTimestamp(
+    Optional<Candle> findByStock_SymbolAndTimestamp(
             String symbol,
-            Long timestamp
+            Instant timestamp
     );
 }
