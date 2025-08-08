@@ -3,8 +3,7 @@ package com.beartrail.marketdata.client.upstox;
 import com.beartrail.marketdata.config.UpstoxConfig;
 import com.beartrail.marketdata.model.dto.DataDto;
 import com.beartrail.marketdata.model.dto.LatestMarketDataResponseDto;
-import com.beartrail.marketdata.model.entity.MarketData;
-import com.beartrail.marketdata.model.entity.TimeInterval;
+import com.beartrail.marketdata.model.entity.Candle;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,7 +26,7 @@ public class UpstoxApiClient {
         this.restTemplate = restTemplate;
     }
 
-    public List<MarketData> getMarketData(List<String> symbolList, String interval) {
+    public List<Candle> getCandles(List<String> symbolList, String interval) {
         String url = String.format("%s/market-quote/ohlc?instrument_key=%s&interval=%s", baseUrl, String.join(",", symbolList), interval);
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + authToken);
@@ -51,7 +50,7 @@ public class UpstoxApiClient {
                     .map(entry -> {
                         String symbol = entry.getKey();
                         DataDto dataDto = entry.getValue();
-                        return new MarketData(
+                        return new Candle(
                                 symbol,
                                 dataDto.getLastPrice(),
                                 dataDto.getInstrumentToken(),

@@ -1,6 +1,6 @@
 package com.beartrail.marketdata.service.impl;
 
-import com.beartrail.marketdata.model.entity.MarketData;
+import com.beartrail.marketdata.model.entity.Candle;
 import com.beartrail.marketdata.service.MarketDataCacheService;
 import org.springframework.stereotype.Service;
 
@@ -10,12 +10,12 @@ import java.util.Optional;
 public class MarketDataCacheServiceImpl implements MarketDataCacheService {         // TODO: Implement caching logic
 
     @Override
-    public Optional<MarketData> get(String cacheKey) {
+    public Optional<Candle> get(String cacheKey) {
         return Optional.empty();
     }
 
     @Override
-    public void cacheLatestMarketData(String symbol, String timeInterval, String data) {
+    public void cacheLatestCandles(String symbol, String timeInterval, String data) {
 
     }
 

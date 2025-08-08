@@ -6,21 +6,24 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PriceUpdateDto {       // represents a ohlc candle for a specific symbol at a specific time interval
     @JsonProperty("open")
-    private Double openPrice;
+    private BigDecimal openPrice;
     @JsonProperty("high")
-    private Double highPrice;
+    private BigDecimal highPrice;
     @JsonProperty("low")
-    private Double lowPrice;
+    private BigDecimal lowPrice;
     @JsonProperty("close")
-    private Double closePrice;
+    private BigDecimal closePrice;
     @JsonProperty("volume")
     private Long volume;
     @JsonProperty("ts")
-    private Long timestamp; // in ms from epoch
+    private Instant timestamp; // in ms from epoch
 }

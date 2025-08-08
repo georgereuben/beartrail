@@ -1,6 +1,7 @@
 package com.beartrail.marketdata.model.entity;
 
 import com.beartrail.marketdata.event.publisher.PriceUpdateEvent;
+import com.beartrail.marketdata.model.dto.PriceUpdateDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -53,6 +54,21 @@ public class Candle {
     @Column(name = "created_at", nullable = false)
     @CreationTimestamp
     private Instant createdAt;
+
+    public Candle(String symbol, Double lastPrice, String instrumentToken, PriceUpdateDto prevOhlc, PriceUpdateDto liveOhlc) {
+        this.stock.setSymbol(symbol);
+        this.stock.setInstrumentToken(instrumentToken);
+        this.stock.setLastPrice(lastPrice);
+
+        if (prevOhlc != null) {
+            this.openPrice = prevOhlc.getOpenPrice();
+            this.highPrice = prevOhlc.getHighPrice();
+            this.lowPrice = prevOhlc.getLowPrice();
+            this.closePrice = prevOhlc.getClosePrice();
+            this.volume = prevOhlc.getVolume();
+            this.timestamp = prevOhlc.getTimestamp();
+        }
+    }
 
     public PriceUpdateEvent toPriceUpdateEvent() {
         return PriceUpdateEvent.builder()

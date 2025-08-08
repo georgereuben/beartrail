@@ -1,14 +1,14 @@
 package com.beartrail.marketdata.service;
 
-import com.beartrail.marketdata.model.entity.MarketData;
+import com.beartrail.marketdata.model.entity.Candle;
 
 import java.util.Optional;
 
 public interface MarketDataCacheService {
 
-    Optional<MarketData> get(String cacheKey);
+    Optional<Candle> get(String cacheKey);
 
-    void cacheLatestMarketData(String symbol, String timeInterval, String data);
+    void cacheLatestCandles(String symbol, String timeInterval, String data);
 
     void invalidateCache(String symbol, String timeInterval);
 
