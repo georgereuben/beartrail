@@ -29,12 +29,28 @@ spring:
     topics:
       market-data-updates: market-data-updates
   datasource:
-    url: jdbc:postgresql://localhost:5432/market_data
-    username: admin
-    password: password
+    url: jdbc:postgresql://localhost:5432/beartrail_market_data
+    username: beartrail
+    password: beartrail123
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: none
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+logging:
+  level:
+    org.flywaydb: INFO
+    org.hibernate.SQL: DEBUG

@@ -1,8 +1,8 @@
 package com.beartrail.marketdata.service.impl;
 
 import com.beartrail.marketdata.client.upstox.UpstoxApiClient;
-import com.beartrail.marketdata.model.entity.MarketData;
-import com.beartrail.marketdata.model.entity.TimeInterval;
+import com.beartrail.marketdata.model.entity.Candle;
+import com.beartrail.marketdata.model.entity.TimeFrameValue;
 import com.beartrail.marketdata.repository.MarketDataRepository;
 import com.beartrail.marketdata.service.CandleUpdateService;
 import com.beartrail.marketdata.service.InstrumentKeyLoader;
@@ -29,7 +29,7 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
     private MarketDataKafkaProducer marketDataKafkaProducer;
 
     @Override
-    public void updateCandlesForInterval(TimeInterval interval) {
+    public void updateCandlesForInterval(TimeFrameValue interval) {
         if (interval == null) {
             throw new IllegalArgumentException("Time interval cannot be null");
         }
@@ -44,23 +44,23 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
             int end = Math.min(i + 500, symbols.size());
             List<String> batchSymbols = symbols.subList(i, end);
 
-            List<MarketData> marketDataList = upstoxApiClient.getMarketData(batchSymbols, interval.getValue());
+            List<Candle> candleList = upstoxApiClient.getCandles(batchSymbols, interval.getValue());
 
-            for (MarketData marketData : marketDataList) {
-                marketDataKafkaProducer.sendPriceUpdate(marketData.toPriceUpdateEvent());
-                marketDataRepository.save(marketData);                                                  // TODO: decouple this and make it consume from market_data kafka topic
-                marketDataCacheService.cacheLatestMarketData(marketData.getSymbol(), interval.getValue(), marketData.toString());
+            for (Candle candle : candleList) {
+                marketDataKafkaProducer.sendPriceUpdate(candle.toPriceUpdateEvent());
+                marketDataRepository.save(candle);                                                  // TODO: decouple this and make it consume from market_data kafka topic
+                marketDataCacheService.cacheLatestCandles(candle.getStock().getSymbol(), interval.getValue(), candle.toString());
             }
         }
     }
 
     @Override
-    public void updateCandlesForSymbol(String symbol, TimeInterval interval) {
+    public void updateCandlesForSymbol(String symbol, TimeFrameValue interval) {
 
     }
 
     @Override
-    public long calculateCompletedIntervalTimestamp(TimeInterval interval) {
+    public long calculateCompletedIntervalTimestamp(TimeFrameValue interval) {
         return 0;
     }
 }

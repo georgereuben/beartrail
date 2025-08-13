@@ -3,6 +3,7 @@ package com.beartrail.marketdata.service;
 import com.beartrail.marketdata.event.publisher.PriceUpdateEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 public class MarketDataKafkaProducer {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());        // instant was not being registered, thus added this module
 
     public void sendPriceUpdate(PriceUpdateEvent priceUpdateEvent) {
         log.info("Sending price update event: {}", priceUpdateEvent);

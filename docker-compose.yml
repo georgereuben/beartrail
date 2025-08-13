@@ -3,11 +3,11 @@ version: '3.8'
 services:
   # Databases
   postgresql:
-    image: postgres:15
+    image: timescale/timescaledb:2.14.2-pg15
     container_name: beartrail-postgres
     environment:
-      POSTGRES_DB: beartrail
-      POSTGRES_USER: beartrail
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: beartrail123
     ports:
       - "5432:5432"
