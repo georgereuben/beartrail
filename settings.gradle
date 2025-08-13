@@ -3,6 +3,7 @@ rootProject.name = 'beartrail'
 // Include all microservices
 include 'services:user-management'
 include 'services:market-data'
+include 'services:market-data-client'
 include 'services:order-simulation'
 include 'services:portfolio'
 include 'services:leaderboard'
@@ -16,6 +17,7 @@ include 'shared:test-utils'
 // Configure project directories
 project(':services:user-management').projectDir = file('services/user-management')
 project(':services:market-data').projectDir = file('services/market-data')
+project(':services:market-data-client').projectDir = file('services/market-data-client')
 project(':services:order-simulation').projectDir = file('services/order-simulation')
 project(':services:portfolio').projectDir = file('services/portfolio')
 project(':services:leaderboard').projectDir = file('services/leaderboard')
