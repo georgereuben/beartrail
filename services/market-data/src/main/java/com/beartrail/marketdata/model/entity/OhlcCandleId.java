@@ -11,6 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OhlcCandleId implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Long candleId;
     private Instant timestamp;
 }
