@@ -29,17 +29,17 @@ public class CandleUpdateScheduler {
 //        log.info("Completed candle update for all intervals");
 //    }
 
-    @Scheduled(cron = "0 0/30 * * * ?") // Runs every 30 minutes
-    public void thirtyMinuteCandleUpdate() {
-        log.info("Starting thirty minute candle update for all intervals");
-        candleUpdateService.updateCandlesForInterval(TimeFrameValue.THIRTY_MINUTES);
-        log.info("Completed thirty minute candle update for all intervals");
-    }
+//    @Scheduled(cron = "0 0/30 * * * ?") // Runs every 30 minutes                // TODO: shift to timescaledb aggregation, remove this, might lead to duplicate candles
+//    public void thirtyMinuteCandleUpdate() {
+//        log.info("Starting thirty minute candle update for all intervals");
+//        candleUpdateService.updateCandlesForInterval(TimeFrameValue.THIRTY_MINUTES);
+//        log.info("Completed thirty minute candle update for all intervals");
+//    }
 
-    @Scheduled(cron = "0 0 0 * * ?")   // Runs daily at midnight
-    public void dailyCandleUpdate() {
-        log.info("Starting daily candle update for all intervals");
-        candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_DAY);
-        log.info("Completed daily candle update for all intervals");
-    }
+//    @Scheduled(cron = "0 0 0 * * ?")   // Runs daily at midnight
+//    public void dailyCandleUpdate() {
+//        log.info("Starting daily candle update for all intervals");
+//        candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_DAY);
+//        log.info("Completed daily candle update for all intervals");
+//    }
 }
