@@ -6,17 +6,13 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-@Entity
-@Table(name = "ohlc_candles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@IdClass(OhlcCandleId.class)
 public class Candle {
 
     @Id
