@@ -3,7 +3,6 @@ package com.beartrail.marketdataclient.service.impl;
 import com.beartrail.marketdataclient.client.upstox.UpstoxApiClient;
 import com.beartrail.marketdataclient.model.entity.Candle;
 import com.beartrail.marketdataclient.model.entity.TimeFrameValue;
-import com.beartrail.marketdataclient.repository.MarketDataRepository;
 import com.beartrail.marketdataclient.service.CandleUpdateService;
 import com.beartrail.marketdataclient.service.InstrumentKeyLoader;
 import com.beartrail.marketdataclient.service.MarketDataKafkaProducer;
@@ -15,12 +14,6 @@ import java.util.List;
 @Service
 public class CandleUpdateServiceImpl implements CandleUpdateService {
 
-    @Autowired
-    private MarketDataServiceImpl marketDataService;
-    @Autowired
-    private MarketDataCacheServiceImpl marketDataCacheService;
-    @Autowired
-    private MarketDataRepository marketDataRepository;
     @Autowired
     private UpstoxApiClient upstoxApiClient;
     @Autowired
@@ -39,6 +32,7 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
         if (symbols.isEmpty()) {
             throw new RuntimeException("No instrument keys found for the given interval: " + interval);
         }
+
         //process symbols in batches of 500
         for (int i = 0; i < symbols.size(); i += 500) {
             int end = Math.min(i + 500, symbols.size());
@@ -48,8 +42,6 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
 
             for (Candle candle : candleList) {
                 marketDataKafkaProducer.sendPriceUpdate(candle.toPriceUpdateEvent());
-                marketDataRepository.save(candle);                                                  // TODO: decouple this and make it consume from market_data kafka topic
-                marketDataCacheService.cacheLatestCandles(candle.getStock().getSymbol(), interval.getValue(), candle.toString());
             }
         }
     }
