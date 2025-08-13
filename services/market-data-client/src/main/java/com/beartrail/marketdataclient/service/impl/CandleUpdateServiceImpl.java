@@ -1,7 +1,7 @@
 package com.beartrail.marketdataclient.service.impl;
 
 import com.beartrail.marketdataclient.client.upstox.UpstoxApiClient;
-import com.beartrail.marketdataclient.model.entity.Candle;
+import com.beartrail.marketdataclient.event.publisher.PriceUpdateEvent;
 import com.beartrail.marketdataclient.model.entity.TimeFrameValue;
 import com.beartrail.marketdataclient.service.CandleUpdateService;
 import com.beartrail.marketdataclient.service.InstrumentKeyLoader;
@@ -38,10 +38,10 @@ public class CandleUpdateServiceImpl implements CandleUpdateService {
             int end = Math.min(i + 500, symbols.size());
             List<String> batchSymbols = symbols.subList(i, end);
 
-            List<Candle> candleList = upstoxApiClient.getCandles(batchSymbols, interval.getValue());
+            List<PriceUpdateEvent> PriceUpdateEventList = upstoxApiClient.getPriceUpdateEvents(batchSymbols, interval.getValue());
 
-            for (Candle candle : candleList) {
-                marketDataKafkaProducer.sendPriceUpdate(candle.toPriceUpdateEvent());
+            for (PriceUpdateEvent priceUpdateEvent : PriceUpdateEventList) {
+                marketDataKafkaProducer.sendPriceUpdate(priceUpdateEvent);
             }
         }
     }
