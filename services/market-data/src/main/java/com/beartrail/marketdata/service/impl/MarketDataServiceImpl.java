@@ -1,10 +1,18 @@
 package com.beartrail.marketdata.service.impl;
 
+import com.beartrail.marketdata.event.publisher.PriceUpdateEvent;
 import com.beartrail.marketdata.model.entity.Candle;
+import com.beartrail.marketdata.model.entity.Instrument;
+import com.beartrail.marketdata.model.entity.Stock;
 import com.beartrail.marketdata.repository.MarketDataRepository;
+import com.beartrail.marketdata.service.InstrumentKeyLoader;
 import com.beartrail.marketdata.service.MarketDataCacheService;
 import com.beartrail.marketdata.service.MarketDataService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -17,10 +25,54 @@ public class MarketDataServiceImpl implements MarketDataService {
 
     private final MarketDataRepository marketDataRepository;
     private final MarketDataCacheService marketDataCacheService;
+    private final ObjectMapper objectMapper;
+    private final InstrumentKeyLoader instrumentKeyLoader;
 
-    public MarketDataServiceImpl(MarketDataRepository marketDataRepository, MarketDataCacheService marketDataCacheService) {
+    public MarketDataServiceImpl(MarketDataRepository marketDataRepository, MarketDataCacheService marketDataCacheService, ObjectMapper objectMapper, InstrumentKeyLoader instrumentKeyLoader) {
         this.marketDataRepository = marketDataRepository;
         this.marketDataCacheService = marketDataCacheService;
+        this.objectMapper = objectMapper;
+        this.instrumentKeyLoader = instrumentKeyLoader;
+    }
+
+    @KafkaListener(topics = "market-data-updates", groupId = "market-data-group")
+    @Transactional
+    public void consumeMarketData(String message) throws JsonProcessingException {
+        try {
+            log.info("Received market data update: {}", message);
+
+            PriceUpdateEvent priceUpdateEvent = objectMapper.readValue(message, PriceUpdateEvent.class);
+
+            String instrumentToken = priceUpdateEvent.getInstrumentToken();
+            String tradingName = instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(instrumentToken);
+
+            // building the stock object from the trading name and price update event
+            Stock stock = Stock.builder()
+                    .symbol(priceUpdateEvent.getSymbol())
+                    .instrumentToken(instrumentToken)
+                    .tradingName(tradingName)
+                    .build();
+
+            // candle from price update event
+            Candle candle = Candle.builder()
+                    .stock(stock)
+                    .timestamp(Instant.ofEpochMilli(priceUpdateEvent.getPrevOhlc().getTimestamp()))
+                    .openPrice(priceUpdateEvent.getPrevOhlc().getOpenPrice())
+                    .highPrice(priceUpdateEvent.getPrevOhlc().getHighPrice())
+                    .lowPrice(priceUpdateEvent.getPrevOhlc().getLowPrice())
+                    .closePrice(priceUpdateEvent.getPrevOhlc().getClosePrice())
+                    .volume(priceUpdateEvent.getPrevOhlc().getVolume())
+                    .build();
+
+            marketDataRepository.save(candle);                  // TODO: batch save for performace opti
+
+            log.info("Market data saved for symbol: {} ({})", stock.getSymbol(), tradingName);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse market data message: {}", message, e);
+            throw e; // rethrowing here is to ensure the message is not acknowledged if parsing fails
+        } catch (Exception e) {
+            log.error("Error processing market data message: {}", message, e);
+        }
     }
 
     @Override
