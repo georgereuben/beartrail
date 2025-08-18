@@ -1,6 +1,5 @@
 package com.beartrail.marketdata.service;
 
-import com.beartrail.marketdata.model.entity.TimeFrameValue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,7 @@ public class CandleUpdateScheduler {
     @Scheduled(cron = "0 0/1 * * * ?") // Runs every minute             // TODO: make these run only during market hours
     public void oneMinuteCandleUpdate() {
         log.info("Starting one minute candle update for all intervals");
-        candleUpdateService.updateCandlesForInterval(TimeFrameValue.ONE_MINUTE);
+        candleUpdateService.updateCandles();
         log.info("Completed one minute candle update for all intervals");
     }
 

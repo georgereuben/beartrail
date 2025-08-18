@@ -4,7 +4,7 @@ import com.beartrail.marketdata.model.entity.TimeFrameValue;
 
 public interface CandleUpdateService {
 
-    void updateCandlesForInterval(TimeFrameValue interval);
+    void updateCandles();
 
     void updateCandlesForSymbol(String symbol, TimeFrameValue interval);
 
