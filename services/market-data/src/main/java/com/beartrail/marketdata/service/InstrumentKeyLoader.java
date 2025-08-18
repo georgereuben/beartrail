@@ -25,25 +25,23 @@ public class InstrumentKeyLoader {
     public void loadInstrumentKeys() {
         log.info("Loading instrument keys from JSON file...");
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("instrument_keys.json");
-
+        try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("instrument_keys.json")) {
             if (inputStream == null) {
                 log.error("instrument_keys.json file not found in resources");
                 instrumentKeysToSymbolMap = new HashMap<>();
                 return;
             }
 
+            ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(inputStream);
             instrumentKeysToSymbolMap = new HashMap<>();
 
-            int totalCount = 0;
-            int equityCount = 0;
-
             if (rootNode.isArray()) {
+                int totalCount = 0; // NOPMD - DD anomaly is acceptable here
+                int equityCount = 0; // NOPMD - DD anomaly is acceptable here
+
                 for (JsonNode instrumentNode : rootNode) {
-                    totalCount++;
+                    totalCount++; // NOPMD - Counter increment is intentional
 
                     String segment = instrumentNode.path("segment").asText();
                     String instrumentKey = instrumentNode.path("instrument_key").asText();
@@ -52,13 +50,16 @@ public class InstrumentKeyLoader {
                     //only processing equity segments for now
                     if (EQUITY_SEGMENTS.contains(segment) && !instrumentKey.isEmpty() && !name.isEmpty()) {
                         instrumentKeysToSymbolMap.put(instrumentKey, name);
-                        equityCount++;
+                        equityCount++; // NOPMD - Counter increment is intentional
                     }
                 }
+
+                log.info("Successfully loaded {} equity instruments out of {} total instruments",
+                        equityCount, totalCount);
+            } else {
+                log.warn("Root node is not an array, no instruments loaded");
             }
 
-            log.info("Successfully loaded {} equity instruments out of {} total instruments",
-                    equityCount, totalCount);
             log.info("Instrument keys map size: {}", instrumentKeysToSymbolMap.size());
 
         } catch (IOException e) {
