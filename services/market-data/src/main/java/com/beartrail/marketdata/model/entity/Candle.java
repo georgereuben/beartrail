@@ -54,42 +54,4 @@ public class Candle {
     @Column(name = "created_at", nullable = true)
     @CreationTimestamp
     private Instant createdAt;
-
-    public Candle(String symbol, Double lastPrice, String instrumentToken, PriceUpdateDto prevOhlc, PriceUpdateDto liveOhlc) {
-        if(this.stock == null) {
-            this.stock = new Stock();
-        }
-        this.stock.setSymbol(symbol);
-        this.stock.setInstrumentToken(instrumentToken);
-        this.stock.setLastPrice(lastPrice);
-
-        this.timestamp = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);    // TODO: switch to liveOhlc based time fetching
-
-        // Assign candleId based on symbol and timestamp hash (or other logic as needed)
-        this.candleId = (symbol + this.timestamp.toString()).hashCode() & 0xffffffffL;
-
-        if (prevOhlc != null) {
-            this.openPrice = prevOhlc.getOpenPrice();
-            this.highPrice = prevOhlc.getHighPrice();
-            this.lowPrice = prevOhlc.getLowPrice();
-            this.closePrice = prevOhlc.getClosePrice();
-            this.volume = prevOhlc.getVolume();
-            this.timestamp = prevOhlc.getTimestamp();
-            // Update candleId if timestamp changes
-            this.candleId = (symbol + this.timestamp.toString()).hashCode() & 0xffffffffL;
-        }
-    }
-
-    public PriceUpdateEvent toPriceUpdateEvent() {
-        return PriceUpdateEvent.builder()
-                .symbol(this.stock.getSymbol())
-                .lastPrice(this.stock.getLastPrice())
-                .openPrice(this.openPrice)
-                .highPrice(this.highPrice)
-                .lowPrice(this.lowPrice)
-                .closePrice(this.closePrice)
-                .volume(this.volume)
-                .timestamp(this.timestamp)
-                .build();
-    }
 }

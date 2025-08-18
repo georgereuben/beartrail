@@ -25,5 +25,5 @@ public class PriceUpdateDto {       // represents a ohlc candle for a specific s
     @JsonProperty("volume")
     private Long volume;
     @JsonProperty("ts")
-    private Instant timestamp; // in ms from epoch
+    private Long timestamp; // in ms from epoch
 }
