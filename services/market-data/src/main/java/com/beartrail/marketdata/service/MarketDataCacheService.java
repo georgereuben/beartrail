@@ -8,9 +8,9 @@ public interface MarketDataCacheService {
 
     Optional<Candle> get(String cacheKey);
 
-    void cacheLatestCandles(String symbol, String timeInterval, String data);
-
     void invalidateCache(String symbol, String timeInterval);
 
     void invalidateAllCache();
+
+    void cacheLatestCandles(String cacheKey, Candle candle);
 }
