@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -20,6 +21,9 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 
     @Query("SELECT s FROM Stock s WHERE s.instrumentToken = :instrumentToken")
     Stock findByInstrumentToken(@Param("instrumentToken") String instrumentToken);
+
+    @Query("SELECT s FROM Stock s WHERE s.instrumentToken IN :instrumentTokens")
+    List<Stock> findByInstrumentTokenIn(@Param("instrumentTokens") Set<String> instrumentTokens);
 
     @Modifying
     @Query(value = """
