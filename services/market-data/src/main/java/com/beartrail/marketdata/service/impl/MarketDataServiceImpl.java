@@ -5,6 +5,7 @@ import com.beartrail.marketdata.model.entity.Candle;
 import com.beartrail.marketdata.model.entity.Instrument;
 import com.beartrail.marketdata.model.entity.Stock;
 import com.beartrail.marketdata.repository.MarketDataRepository;
+import com.beartrail.marketdata.repository.StockRepository;
 import com.beartrail.marketdata.service.InstrumentKeyLoader;
 import com.beartrail.marketdata.service.MarketDataCacheService;
 import com.beartrail.marketdata.service.MarketDataService;
@@ -24,12 +25,14 @@ import java.util.Optional;
 public class MarketDataServiceImpl implements MarketDataService {
 
     private final MarketDataRepository marketDataRepository;
+    private final StockRepository stockRepository;
     private final MarketDataCacheService marketDataCacheService;
     private final ObjectMapper objectMapper;
     private final InstrumentKeyLoader instrumentKeyLoader;
 
-    public MarketDataServiceImpl(MarketDataRepository marketDataRepository, MarketDataCacheService marketDataCacheService, ObjectMapper objectMapper, InstrumentKeyLoader instrumentKeyLoader) {
+    public MarketDataServiceImpl(MarketDataRepository marketDataRepository, StockRepository stockRepository, MarketDataCacheService marketDataCacheService, ObjectMapper objectMapper, InstrumentKeyLoader instrumentKeyLoader) {
         this.marketDataRepository = marketDataRepository;
+        this.stockRepository = stockRepository;
         this.marketDataCacheService = marketDataCacheService;
         this.objectMapper = objectMapper;
         this.instrumentKeyLoader = instrumentKeyLoader;
@@ -46,15 +49,26 @@ public class MarketDataServiceImpl implements MarketDataService {
             String instrumentToken = priceUpdateEvent.getInstrumentToken();
             String tradingName = instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(instrumentToken);
 
-            // building the stock object from the trading name and price update event
-            Stock stock = Stock.builder()
-                    .symbol(priceUpdateEvent.getSymbol())
-                    .instrumentToken(instrumentToken)
-                    .tradingName(tradingName)
-                    .build();
+            // finding existing stock or create and save new one
+            Stock stock = stockRepository.findBySymbol(priceUpdateEvent.getSymbol());
+            if (stock == null) {
+                stock = Stock.builder()
+                        .symbol(priceUpdateEvent.getSymbol())
+                        .instrumentToken(instrumentToken)
+                        .tradingName(tradingName)
+                        .lastPrice(priceUpdateEvent.getLastPrice())
+                        .build();
+                stock = stockRepository.save(stock);
+                log.info("Created new stock entity for symbol: {}", stock.getSymbol());
+            } else {
+                stock.setLastPrice(priceUpdateEvent.getLastPrice());
+                stock = stockRepository.save(stock);
+                log.info("Updated existing stock entity for symbol: {}", stock.getSymbol());
+            }
 
             // candle from price update event
             Candle candle = Candle.builder()
+                    .candleId(System.currentTimeMillis()) // generate unique ID using timestamp since timescaledb was having issues with auto-generation
                     .stock(stock)
                     .timestamp(Instant.ofEpochMilli(priceUpdateEvent.getPrevOhlc().getTimestamp()))
                     .openPrice(priceUpdateEvent.getPrevOhlc().getOpenPrice())
