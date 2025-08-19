@@ -15,6 +15,12 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
 
     Stock findBySymbol(String symbol);
 
+    @Query("SELECT s.id FROM Stock s WHERE s.instrumentToken = :instrumentToken")
+    Long findIdByInstrumentToken(@Param("instrumentToken") String instrumentToken);
+
+    @Query("SELECT s FROM Stock s WHERE s.instrumentToken = :instrumentToken")
+    Stock findByInstrumentToken(@Param("instrumentToken") String instrumentToken);
+
     @Modifying
     @Query(value = """
         INSERT INTO stocks (symbol, instrument_token, trading_name, last_price)
