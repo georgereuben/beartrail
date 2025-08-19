@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -72,7 +73,6 @@ public class MarketDataServiceImpl implements MarketDataService {
         List<Candle> candles = new ArrayList<>();
         Set<String> newInstrumentTokens = new HashSet<>();
 
-        // parsing all messages into PriceUpdateEvent objects
         List<PriceUpdateEvent> events = new ArrayList<>();
         for (String message : messages) {
             events.add(parseMessage(message));
@@ -92,10 +92,22 @@ public class MarketDataServiceImpl implements MarketDataService {
             evictStockCaches(newInstrumentTokens);
         }
 
+        //batch fetch all required stocks in a single query
+        Set<String> allInstrumentTokens = events.stream()
+            .map(PriceUpdateEvent::getInstrumentToken)
+            .collect(Collectors.toSet());
+
+        List<Stock> stocks = stockRepository.findByInstrumentTokenIn(allInstrumentTokens);
+        Map<String, Stock> instrumentTokenToStockMap = stocks.stream()
+            .collect(Collectors.toMap(Stock::getInstrumentToken, stock -> stock));
+
         TimeFrame timeFrame = getTimeFrame("I1");
         for (PriceUpdateEvent event : events) {
-            Long stockId = getStockIdByInstrumentToken(event.getInstrumentToken());
-            Stock stock = getStockById(stockId);
+            Stock stock = instrumentTokenToStockMap.get(event.getInstrumentToken());
+            if (stock == null) {
+                log.error("Stock not found for instrument token: {}", event.getInstrumentToken());
+                continue;
+            }
             candles.add(createCandle(stock, event, timeFrame));
         }
 
@@ -116,27 +128,28 @@ public class MarketDataServiceImpl implements MarketDataService {
 
     @CacheEvict(allEntries = true, cacheNames = {"stocks"})
     private void evictStockCaches(Set<String> instrumentTokens) {
-        // Force cache refresh for new stocks
+
     }
 
     private void createNewStocks(List<PriceUpdateEvent> events, Set<String> newInstrumentTokens) {
-        List<Stock> newStocks = new ArrayList<>();
         Map<String, String> instrumentToNameMap = instrumentKeyLoader.getInstrumentKeysToSymbolMap();
+        Set<String> processedSymbols = new HashSet<>();
 
         for (PriceUpdateEvent event : events) {
-            if (newInstrumentTokens.contains(event.getInstrumentToken())) {
-                Stock stock = Stock.builder()
-                        .symbol(event.getSymbol())
-                        .instrumentToken(event.getInstrumentToken())
-                        .tradingName(instrumentToNameMap.get(event.getInstrumentToken()))
-                        .lastPrice(event.getLastPrice())
-                        .build();
-                newStocks.add(stock);
+            if (newInstrumentTokens.contains(event.getInstrumentToken()) &&
+                !processedSymbols.contains(event.getSymbol())) {
+
+                stockRepository.upsertStock(
+                    event.getSymbol(),
+                    event.getInstrumentToken(),
+                    instrumentToNameMap.get(event.getInstrumentToken()),
+                    BigDecimal.valueOf(event.getLastPrice())
+                );
+                processedSymbols.add(event.getSymbol());
             }
         }
 
-        stockRepository.saveAll(newStocks);
-        log.info("Created {} new stocks", newStocks.size());
+        log.info("Upserted {} stocks", processedSymbols.size());
     }
 
     private Candle createCandle(Stock stock, PriceUpdateEvent event, TimeFrame timeFrame) {
