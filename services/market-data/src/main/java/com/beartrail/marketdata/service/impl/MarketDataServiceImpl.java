@@ -16,6 +16,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@CacheConfig(cacheNames = "marketData")
 public class MarketDataServiceImpl implements MarketDataService {
 
     private final MarketDataRepository marketDataRepository;
@@ -44,6 +47,16 @@ public class MarketDataServiceImpl implements MarketDataService {
         this.marketDataCacheService = marketDataCacheService;
         this.objectMapper = objectMapper;
         this.instrumentKeyLoader = instrumentKeyLoader;
+    }
+
+    @Cacheable(key = "'timeframe_' + #value")
+    public TimeFrame getTimeFrame(String value) {
+        return timeFrameRepository.findByValue(value);
+    }
+
+    @Cacheable(key = "'stock_' + #symbol")
+    public Stock getStockBySymbol(String symbol) {
+        return stockRepository.findBySymbol(symbol);
     }
 
     @KafkaListener(topics = "market-data-updates", groupId = "market-data-group")
@@ -83,11 +96,11 @@ public class MarketDataServiceImpl implements MarketDataService {
                 instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(event.getInstrumentToken()),
                 BigDecimal.valueOf(event.getLastPrice())
         );
-        return stockRepository.findBySymbol(event.getSymbol());
+        return getStockBySymbol(event.getSymbol());
     }
 
     private Candle createCandle(Stock stock, PriceUpdateEvent priceUpdateEvent) {
-        TimeFrame timeFrame = timeFrameRepository.findByValue("I1");
+        TimeFrame timeFrame = getTimeFrame("I1");
         if (timeFrame == null) {
             log.error("TimeFrame with value 'I1' not found in database");
             throw new RuntimeException("Required TimeFrame not found");

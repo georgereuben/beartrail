@@ -18,6 +18,9 @@ beartrail:
       market-data-updates: market-data-updates
 
 spring:
+  cache:
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=300s
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
