@@ -24,7 +24,7 @@ public class Candle {
     private Long candleId;
 
     @Id
-    @Column(nullable = true)
+    @Column(nullable = false)
     private Instant timestamp = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES); // TODO: check starting of all minutes
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)  // TODO: this is to make sure stock is persisted when candle is saved, check once
