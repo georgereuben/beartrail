@@ -24,9 +24,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -59,16 +57,22 @@ public class MarketDataServiceImpl implements MarketDataService {
         return stockRepository.findBySymbol(symbol);
     }
 
-    @KafkaListener(topics = "market-data-updates", groupId = "market-data-group")
-    public void consumeMarketData(String message) throws JsonProcessingException {
-        try {
-            PriceUpdateEvent priceUpdateEvent = parseMessage(message);
-            processMarketDataUpdate(priceUpdateEvent);
-        } catch (JsonProcessingException e) {
-            log.error("Error processing market data update message: {}", message, e);           // TODO: add to DLQ maybe
-        } catch (Exception e) {
-            log.error("Unexpected error while processing market data update: {}", message, e);
+    @KafkaListener(topics = "market-data-updates", containerFactory = "batchFactory")
+    @Transactional
+    public void consumeMarketDataBatch(List<String> messages) throws JsonProcessingException {
+        List<Candle> candles = new ArrayList<>();
+        Set<String> symbolsToUpdate = new HashSet<>();
+
+        for (String message : messages) {
+            PriceUpdateEvent event = parseMessage(message);
+            Stock stock = findOrCreateStock(event);
+            candles.add(createCandle(stock, event));
+            symbolsToUpdate.add(event.getSymbol());
         }
+
+        marketDataRepository.saveAll(candles);
+
+        stockRepository.updateLastPricesInBatch(symbolsToUpdate);
     }
 
     private PriceUpdateEvent parseMessage(String message) throws JsonProcessingException {
@@ -80,13 +84,6 @@ public class MarketDataServiceImpl implements MarketDataService {
             log.error("Failed to parse market data update message: {}", message, e);
             throw e; // rethrowing, will handle it in the listener later
         }
-    }
-
-    @Transactional
-    private void processMarketDataUpdate(PriceUpdateEvent priceUpdateEvent) {
-        Stock stock = findOrCreateStock(priceUpdateEvent);
-        Candle candle = createCandle(stock, priceUpdateEvent);
-        marketDataRepository.save(candle);
     }
 
     private Stock findOrCreateStock(PriceUpdateEvent event) {

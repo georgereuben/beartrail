@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Long> {
@@ -26,5 +27,7 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
                      @Param("instrumentToken") String instrumentToken,
                      @Param("tradingName") String tradingName,
                      @Param("lastPrice") BigDecimal lastPrice);
+
+    void updateLastPricesInBatch(Set<String> symbolsToUpdate);
 }
 
