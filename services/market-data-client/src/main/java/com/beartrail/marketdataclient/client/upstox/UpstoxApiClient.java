@@ -1,0 +1,64 @@
+package com.beartrail.marketdataclient.client.upstox;
+
+import com.beartrail.marketdataclient.config.UpstoxConfig;
+import com.beartrail.marketdataclient.event.publisher.PriceUpdateEvent;
+import com.beartrail.marketdataclient.model.dto.LatestMarketDataResponseDto;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+
+@Component
+public class UpstoxApiClient {
+
+    private final String baseUrl;
+    private final String authToken;
+    private final RestTemplate restTemplate;
+
+    public UpstoxApiClient(UpstoxConfig config, RestTemplate restTemplate) {
+        this.baseUrl = config.getBaseUrl();
+        this.authToken = config.getAuthToken();
+        this.restTemplate = restTemplate;
+    }
+
+    public List<PriceUpdateEvent> getPriceUpdateEvents(List<String> symbolList, String interval) {
+        String url = String.format("%s/market-quote/ohlc?instrument_key=%s&interval=%s", baseUrl, String.join(",", symbolList), interval);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + authToken);
+        headers.set("Content-Type", "application/json");
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<LatestMarketDataResponseDto> responseEntity = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                LatestMarketDataResponseDto.class
+        );
+
+        LatestMarketDataResponseDto response = responseEntity.getBody();
+        if(response == null || response.getData() == null || response.getData().isEmpty()) {
+            throw new RuntimeException("No market data found for the given symbol and interval");
+        }
+
+        try {
+            return response.getData().entrySet().stream()
+                    .map(entry ->
+                        PriceUpdateEvent.builder()
+                                .symbol(entry.getKey())
+                                .instrumentToken(entry.getValue().getInstrumentToken())
+                                .lastPrice(entry.getValue().getLastPrice())
+                                .prevOhlc(entry.getValue().getPrevOhlc())
+                                .liveOhlc(entry.getValue().getLiveOhlc())
+                                .build()
+                    )
+                    .toList();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse market data response", e);
+        }
+    }
+}

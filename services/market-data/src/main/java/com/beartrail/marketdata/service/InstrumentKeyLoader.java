@@ -7,8 +7,10 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -16,62 +18,53 @@ import java.util.Set;
 @Component
 public class InstrumentKeyLoader {
 
-    private List<String> instrumentKeys;
+    private Map<String, String> instrumentKeysToSymbolMap;
     private static final Set<String> EQUITY_SEGMENTS = Set.of("NSE_EQ", "BSE_EQ");
 
     @PostConstruct
     public void loadInstrumentKeys() {
-        try {
-            try (var is = Thread.currentThread().getContextClassLoader().getResourceAsStream("instrument_keys.json")) {
-                if (is == null) {
-                    throw new IllegalStateException("instrument_keys.json not found in resources");
-                }
+        log.info("Loading instrument keys from JSON file...");
 
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode rootNode = mapper.readTree(is);
+        try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("instrument_keys.json")) {
+            if (inputStream == null) {
+                log.error("instrument_keys.json file not found in resources");
+                instrumentKeysToSymbolMap = new HashMap<>();
+                return;
+            }
 
-                instrumentKeys = new ArrayList<>();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(inputStream);
+            instrumentKeysToSymbolMap = new HashMap<>();
 
-                if (rootNode.isArray()) {
-                    // Process array of instrument objects
-                    for (JsonNode instrumentNode : rootNode) {
-                        if (instrumentNode.isObject()) {
-                            processInstrumentNode(instrumentNode);
-                        }
+            if (rootNode.isArray()) {
+                int totalCount = 0; // NOPMD - DD anomaly is acceptable here
+                int equityCount = 0; // NOPMD - DD anomaly is acceptable here
+
+                for (JsonNode instrumentNode : rootNode) {
+                    totalCount++; // NOPMD - Counter increment is intentional
+
+                    String segment = instrumentNode.path("segment").asText();
+                    String instrumentKey = instrumentNode.path("instrument_key").asText();
+                    String name = instrumentNode.path("name").asText();
+
+                    //only processing equity segments for now
+                    if (EQUITY_SEGMENTS.contains(segment) && !instrumentKey.isEmpty() && !name.isEmpty()) {
+                        instrumentKeysToSymbolMap.put(instrumentKey, name);
+                        equityCount++; // NOPMD - Counter increment is intentional
                     }
-                } else {
-                    throw new IllegalStateException("Expected JSON array structure in instrument_keys.json");
                 }
 
-                log.info("Loaded {} equity instrument keys", instrumentKeys.size());
-                log.debug("Equity instrument keys: {}", instrumentKeys);
+                log.info("Successfully loaded {} equity instruments out of {} total instruments",
+                        equityCount, totalCount);
+            } else {
+                log.warn("Root node is not an array, no instruments loaded");
             }
-        } catch (Exception e) {
-            log.error("Failed to load instrument keys", e);
-            instrumentKeys = new ArrayList<>(); // Initialize empty list on failure
-        }
-    }
 
-    private void processInstrumentNode(JsonNode instrumentNode) {
-        // Check if this is an equity instrument
-        if (instrumentNode.has("segment") && instrumentNode.has("instrument_key")) {
-            String segment = instrumentNode.get("segment").asText();
+            log.info("Instrument keys map size: {}", instrumentKeysToSymbolMap.size());
 
-            if (EQUITY_SEGMENTS.contains(segment)) {
-                String instrumentKey = instrumentNode.get("instrument_key").asText();
-
-                if (!instrumentKey.isEmpty()) {
-                    instrumentKeys.add(instrumentKey);
-
-                    // Log details for debugging
-                    String tradingSymbol = instrumentNode.has("trading_symbol")
-                        ? instrumentNode.get("trading_symbol").asText() : "N/A";
-                    String name = instrumentNode.has("name")
-                        ? instrumentNode.get("name").asText() : "N/A";
-
-                    log.debug("Added equity instrument: {} - {} ({})", instrumentKey, tradingSymbol, name);
-                }
-            }
+        } catch (IOException e) {
+            log.error("Error loading instrument keys from JSON file", e);
+            instrumentKeysToSymbolMap = new HashMap<>();
         }
     }
 }

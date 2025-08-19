@@ -25,6 +25,9 @@ public class Stock extends Instrument {
     @Column(name = "symbol", nullable = false, unique = true)
     private String symbol;
 
+    @Column(name = "trading_name", nullable = false)
+    private String tradingName;
+
     @Column(name="instrument_token", nullable = false)
     private String instrumentToken;
 

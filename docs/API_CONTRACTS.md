@@ -269,762 +269,271 @@ The User Management Service handles both authentication and user profile managem
 
 ---
 
-## Market Data Service
+## Market Data Services (Decoupled Architecture)
 
-**Base URL**: `http://localhost:8082/market`
+### Market Data Client Service
 
-### REST Endpoints
+**Base URL**: `http://localhost:8082/market-client` (Internal Backend Service)
 
-#### GET /market/instruments
-**Description**: Get list of available trading instruments
+**Purpose**: Lightweight service dedicated to Upstox API interfacing and real-time data distribution
 
-**Query Parameters**:
-- `exchange` (optional): Filter by exchange
-- `sector` (optional): Filter by sector
-- `limit` (optional): Number of results (default: 100)
-- `offset` (optional): Pagination offset
+**Service Architecture**:
+- **Upstox API Integration**: Fetches OHLCV candlestick data with parallel processing
+- **Kafka Event Publishing**: Publishes to both `market-data-updates` and `market-data-persistence` topics
+- **Redis Caching**: Caches recent API responses for performance
+- **No Database Operations**: Purely focused on data fetching and real-time distribution
+
+### Data Fetching Schedule
+
+| Interval | Cron Schedule | Source | Description |
+|----------|---------------|--------|-------------|
+| **1 minute** | `0 0/1 * * * ?` | Upstox API | Parallel batch processing of 20,000+ stocks |
+
+### Performance Optimizations
+
+**Parallel Processing**:
+- **Batch Size**: 500 stocks per API call
+- **Thread Pool**: 12 concurrent threads
+- **Connection Pooling**: 100 total connections, 25 per route
+- **Timeouts**: 3s connect, 8s read
+
+**Kafka Publishing**:
+```java
+// Dual topic publishing for separation of concerns
+kafkaProducer.sendAsync("market-data-updates", candle);     // Real-time consumers
+kafkaProducer.sendAsync("market-data-persistence", candle); // Storage service
+```
+
+### Market Data Service (Main)
+
+**Base URL**: `http://localhost:8083/market-data` (Internal API Service)
+
+**Purpose**: Central market data repository with optimized database operations and query serving
+
+**Service Architecture**:
+- **Kafka Consumer**: Consumes from `market-data-persistence` topic with batch processing
+- **TimescaleDB Storage**: Optimized time-series storage with compression and partitioning
+- **Query API**: REST endpoints for historical data retrieval
+- **Continuous Aggregates**: Automatic generation of higher timeframe candles
+
+### Database Operations
+
+**Batch Processing**:
+- **Batch Size**: 1000 candles per database write
+- **Flush Interval**: Every 5 seconds or when batch is full
+- **Connection Pooling**: Optimized for high-throughput writes
+
+**TimescaleDB Integration**:
+- **Hypertable Configuration**: 1-day chunks with compression
+- **Retention Policy**: 2 years automatic cleanup
+- **Indexing**: Optimized for symbol + timeframe + timestamp queries
+
+### REST API Endpoints
+
+#### GET /api/candles/{symbol}
+**Description**: Get historical candle data for a symbol
+
+**Parameters**:
+- `symbol` (path): Stock symbol (e.g., "NSE_EQ|INE002A01018")
+- `interval` (query): Time interval ("I1", "I30", "1d")
+- `from` (query): Start timestamp (ISO 8601)
+- `to` (query): End timestamp (ISO 8601)
+- `limit` (query, optional): Maximum number of candles (default: 1000)
 
 **Response (200)**:
 ```json
 {
-  "instruments": [
+  "symbol": "NSE_EQ|INE002A01018",
+  "interval": "I1",
+  "candles": [
     {
-      "symbol": "AAPL",
-      "name": "Apple Inc.",
-      "exchange": "NASDAQ",
-      "sector": "Technology",
-      "currency": "USD",
-      "lotSize": 1,
-      "tickSize": 0.01,
-      "isActive": true
+      "timestamp": "2025-08-13T09:15:00Z",
+      "open": 150.00,
+      "high": 152.50,
+      "low": 149.75,
+      "close": 151.25,
+      "volume": 125000
     }
   ],
-  "totalCount": 1000,
-  "hasMore": true
+  "count": 1,
+  "fromTimestamp": "2025-08-13T09:15:00Z",
+  "toTimestamp": "2025-08-13T15:30:00Z"
 }
 ```
 
-#### GET /market/quote/{symbol}
-**Description**: Get current quote for a symbol
+#### GET /api/latest/{symbol}
+**Description**: Get the latest candle for a symbol
 
-**Path Parameters**:
-- `symbol`: Trading symbol (e.g., AAPL)
+**Parameters**:
+- `symbol` (path): Stock symbol
+- `interval` (query): Time interval
 
 **Response (200)**:
 ```json
 {
-  "symbol": "AAPL",
-  "lastPrice": 150.25,
-  "bid": 150.20,
-  "ask": 150.30,
-  "volume": 1000000,
-  "change": 2.50,
-  "changePercent": 1.69,
-  "high": 152.00,
-  "low": 148.50,
-  "open": 149.00,
-  "previousClose": 147.75,
-  "timestamp": "2025-07-30T15:30:00Z"
+  "symbol": "NSE_EQ|INE002A01018",
+  "interval": "I1",
+  "candle": {
+    "timestamp": "2025-08-13T15:30:00Z",
+    "open": 151.00,
+    "high": 151.75,
+    "low": 150.50,
+    "close": 151.25,
+    "volume": 45000
+  }
 }
 ```
 
-#### GET /market/quotes
-**Description**: Get quotes for multiple symbols
+#### GET /api/bulk/latest
+**Description**: Get latest candles for multiple symbols
 
-**Query Parameters**:
-- `symbols`: Comma-separated list of symbols
+**Parameters**:
+- `symbols` (query): Comma-separated list of symbols
+- `interval` (query): Time interval
 
 **Response (200)**:
 ```json
 {
-  "quotes": [
-    { /* quote object for each symbol */ }
-  ]
-}
-```
-
-#### GET /market/history/{symbol}
-**Description**: Get historical price data
-
-**Path Parameters**:
-- `symbol`: Trading symbol
-
-**Query Parameters**:
-- `interval`: Time interval (1m, 5m, 15m, 1h, 1d)
-- `from`: Start date (ISO 8601)
-- `to`: End date (ISO 8601)
-
-**Response (200)**:
-```json
-{
-  "symbol": "AAPL",
-  "interval": "1d",
-  "data": [
-    {
-      "timestamp": "2025-07-30T00:00:00Z",
-      "open": 149.00,
-      "high": 152.00,
-      "low": 148.50,
-      "close": 150.25,
-      "volume": 1000000
-    }
-  ]
-}
-```
-
-### WebSocket Endpoints
-
-#### WS /market/live
-**Description**: Real-time price updates
-
-**Subscribe Message**:
-```json
-{
-  "action": "subscribe",
-  "symbols": ["AAPL", "GOOGL", "MSFT"]
-}
-```
-
-**Price Update Message**:
-```json
-{
-  "type": "price_update",
-  "symbol": "AAPL",
-  "price": 150.25,
-  "change": 2.50,
-  "changePercent": 1.69,
-  "volume": 1000000,
-  "timestamp": "2025-07-30T15:30:00Z"
-}
-```
-
----
-
-## Order Simulation Service
-
-**Base URL**: `http://localhost:8083/orders`
-
-### REST Endpoints
-
-#### POST /orders
-**Description**: Place a new order
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Request Body**:
-```json
-{
-  "symbol": "AAPL",
-  "side": "BUY",
-  "orderType": "LIMIT",
-  "quantity": 100,
-  "price": 150.00,
-  "stopPrice": null,
-  "timeInForce": "DAY",
-  "clientOrderId": "string"
-}
-```
-
-**Response (201)**:
-```json
-{
-  "orderId": "uuid",
-  "clientOrderId": "string",
-  "status": "PENDING",
-  "message": "Order placed successfully",
-  "estimatedFees": 1.50
-}
-```
-
-#### GET /orders
-**Description**: Get user's orders
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Query Parameters**:
-- `status` (optional): Filter by order status
-- `symbol` (optional): Filter by symbol
-- `from` (optional): Start date
-- `to` (optional): End date
-- `limit` (optional): Number of results
-- `offset` (optional): Pagination offset
-
-**Response (200)**:
-```json
-{
-  "orders": [
-    {
-      "orderId": "uuid",
-      "clientOrderId": "string",
-      "symbol": "AAPL",
-      "side": "BUY",
-      "orderType": "LIMIT",
-      "quantity": 100,
-      "filledQuantity": 50,
-      "remainingQuantity": 50,
-      "price": 150.00,
-      "averageFillPrice": 149.95,
-      "status": "PARTIALLY_FILLED",
-      "timeInForce": "DAY",
-      "createdAt": "2025-07-30T10:30:00Z",
-      "updatedAt": "2025-07-30T10:35:00Z"
-    }
-  ],
-  "totalCount": 25,
-  "hasMore": true
-}
-```
-
-#### GET /orders/{orderId}
-**Description**: Get order details
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Path Parameters**:
-- `orderId`: Order UUID
-
-**Response (200)**:
-```json
-{
-  "orderId": "uuid",
-  "clientOrderId": "string",
-  "symbol": "AAPL",
-  "side": "BUY",
-  "orderType": "LIMIT",
-  "quantity": 100,
-  "filledQuantity": 100,
-  "remainingQuantity": 0,
-  "price": 150.00,
-  "averageFillPrice": 149.98,
-  "status": "FILLED",
-  "timeInForce": "DAY",
-  "fees": 1.50,
-  "fills": [
-    {
-      "fillId": "uuid",
-      "quantity": 50,
-      "price": 149.95,
-      "timestamp": "2025-07-30T10:32:00Z"
+  "interval": "I1",
+  "candles": {
+    "NSE_EQ|INE002A01018": {
+      "timestamp": "2025-08-13T15:30:00Z",
+      "open": 151.00,
+      "high": 151.75,
+      "low": 150.50,
+      "close": 151.25,
+      "volume": 45000
     },
-    {
-      "fillId": "uuid",
-      "quantity": 50,
-      "price": 150.01,
-      "timestamp": "2025-07-30T10:33:00Z"
+    "NSE_EQ|INE009A01021": {
+      "timestamp": "2025-08-13T15:30:00Z",
+      "open": 2750.00,
+      "high": 2765.50,
+      "low": 2745.25,
+      "close": 2760.75,
+      "volume": 12500
     }
-  ],
-  "createdAt": "2025-07-30T10:30:00Z",
-  "updatedAt": "2025-07-30T10:33:00Z"
+  },
+  "count": 2
 }
 ```
 
-#### DELETE /orders/{orderId}
-**Description**: Cancel an order
+#### GET /api/aggregates/{symbol}
+**Description**: Get aggregated data (from continuous aggregates)
 
-**Headers**: `Authorization: Bearer <token>`
-
-**Path Parameters**:
-- `orderId`: Order UUID
+**Parameters**:
+- `symbol` (path): Stock symbol
+- `type` (query): Aggregate type ("5m", "30m", "1h", "1d")
+- `from` (query): Start timestamp
+- `to` (query): End timestamp
 
 **Response (200)**:
 ```json
 {
-  "message": "Order cancelled successfully",
-  "orderId": "uuid",
-  "status": "CANCELLED"
-}
-```
-
-#### GET /orders/trades
-**Description**: Get user's trade history
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Query Parameters**: Same as orders endpoint
-
-**Response (200)**:
-```json
-{
-  "trades": [
+  "symbol": "NSE_EQ|INE002A01018",
+  "aggregateType": "5m",
+  "candles": [
     {
-      "tradeId": "uuid",
-      "orderId": "uuid",
-      "symbol": "AAPL",
-      "side": "BUY",
-      "quantity": 100,
-      "price": 149.98,
-      "fees": 1.50,
-      "timestamp": "2025-07-30T10:33:00Z"
-    }
-  ],
-  "totalCount": 50,
-  "hasMore": true
-}
-```
-
----
-
-## Portfolio Service
-
-**Base URL**: `http://localhost:8084/portfolio`
-
-### REST Endpoints
-
-#### GET /portfolio
-**Description**: Get user's portfolio summary
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Response (200)**:
-```json
-{
-  "userId": "uuid",
-  "totalValue": 105000.00,
-  "cashBalance": 25000.00,
-  "investedAmount": 80000.00,
-  "totalPnL": 5000.00,
-  "dayPnL": 250.00,
-  "totalPnLPercent": 5.00,
-  "dayPnLPercent": 0.25,
-  "updatedAt": "2025-07-30T15:30:00Z"
-}
-```
-
-#### GET /portfolio/holdings
-**Description**: Get user's current holdings
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Response (200)**:
-```json
-{
-  "holdings": [
-    {
-      "symbol": "AAPL",
-      "quantity": 100,
-      "averagePrice": 149.50,
-      "currentPrice": 150.25,
-      "marketValue": 15025.00,
-      "unrealizedPnL": 75.00,
-      "unrealizedPnLPercent": 0.50,
-      "dayPnL": 25.00,
-      "dayPnLPercent": 0.17,
-      "updatedAt": "2025-07-30T15:30:00Z"
-    }
-  ],
-  "totalMarketValue": 80000.00,
-  "totalUnrealizedPnL": 5000.00
-}
-```
-
-#### GET /portfolio/performance
-**Description**: Get portfolio performance metrics
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Query Parameters**:
-- `period`: Performance period (1d, 1w, 1m, 3m, 6m, 1y, all)
-
-**Response (200)**:
-```json
-{
-  "period": "1m",
-  "startValue": 100000.00,
-  "endValue": 105000.00,
-  "totalReturn": 5000.00,
-  "totalReturnPercent": 5.00,
-  "annualizedReturn": 60.00,
-  "volatility": 15.50,
-  "sharpeRatio": 3.87,
-  "maxDrawdown": -2.50,
-  "winRate": 65.00,
-  "profitFactor": 1.85,
-  "dailyReturns": [
-    {
-      "date": "2025-07-01",
-      "value": 100000.00,
-      "return": 0.00,
-      "returnPercent": 0.00
+      "bucket": "2025-08-13T09:15:00Z",
+      "open": 150.00,
+      "high": 152.50,
+      "low": 149.75,
+      "close": 151.25,
+      "volume": 625000,
+      "candleCount": 5
     }
   ]
 }
 ```
 
-#### GET /portfolio/analytics
-**Description**: Get detailed portfolio analytics
+### Continuous Aggregates
 
-**Headers**: `Authorization: Bearer <token>`
+**5-minute candles** (from 1-minute data):
+```sql
+CREATE MATERIALIZED VIEW ohlc_5m_candles
+WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket('5 minutes', timestamp) AS bucket,
+    stock_id,
+    FIRST(open_price, timestamp) AS open_price,
+    MAX(high_price) AS high_price,
+    MIN(low_price) AS low_price,
+    LAST(close_price, timestamp) AS close_price,
+    SUM(volume) AS volume,
+    COUNT(*) AS candle_count
+FROM ohlc_candles
+GROUP BY bucket, stock_id;
+```
+
+### Kafka Event Flow
+
+**Market Data Client Service Produces**:
+- `market-data-updates`: Real-time price updates for immediate consumption
+- `market-data-persistence`: Candle data for database storage
+
+**Market Data Service Consumes**:
+- `market-data-persistence`: Batch processes and stores candle data
+
+**Event Structure**:
+```json
+{
+  "symbol": "NSE_EQ|INE002A01018",
+  "lastPrice": 150.25,
+  "openPrice": 149.00,
+  "highPrice": 152.00,
+  "lowPrice": 148.50,
+  "closePrice": 150.25,
+  "volume": 1000000,
+  "timestamp": "2025-08-13T15:30:00Z",
+  "timeInterval": "I1",
+  "instrumentToken": "151064324"
+}
+```
+
+### Performance Characteristics
+
+**Market Data Client Service**:
+- **Target Processing Time**: <25 seconds for 20,000 stocks
+- **API Throughput**: 40+ parallel batches of 500 stocks
+- **Kafka Publishing**: Asynchronous dual-topic publishing
+- **Memory Usage**: Optimized for minimal footprint
+
+**Market Data Service**:
+- **Database Write Throughput**: 1000+ candles per batch
+- **Query Performance**: Sub-second response for historical data
+- **Storage Efficiency**: TimescaleDB compression for long-term storage
+- **Cache Hit Ratio**: 90%+ for frequently accessed data
+
+### Service Health Endpoints
+
+#### GET /actuator/health (Both Services)
+**Description**: Service health status
 
 **Response (200)**:
 ```json
 {
-  "diversification": {
-    "sectorAllocation": [
-      {
-        "sector": "Technology",
-        "value": 40000.00,
-        "percentage": 50.00
-      }
-    ],
-    "concentrationRisk": "MEDIUM",
-    "herfindahlIndex": 0.35
-  },
-  "riskMetrics": {
-    "portfolioBeta": 1.15,
-    "valueAtRisk": -2500.00,
-    "expectedShortfall": -3200.00,
-    "correlation": 0.75
-  },
-  "tradingMetrics": {
-    "totalTrades": 125,
-    "winningTrades": 81,
-    "losingTrades": 44,
-    "averageWin": 150.00,
-    "averageLoss": -75.00,
-    "largestWin": 850.00,
-    "largestLoss": -320.00
+  "status": "UP",
+  "components": {
+    "kafka": {
+      "status": "UP"
+    },
+    "redis": {
+      "status": "UP"
+    },
+    "db": {
+      "status": "UP"
+    }
   }
 }
 ```
+
+#### GET /actuator/metrics (Both Services)
+**Description**: Service metrics for monitoring
+
+**Key Metrics**:
+- `market.data.fetch.duration`: API fetch time per batch
+- `market.data.kafka.publish.rate`: Kafka publishing throughput
+- `market.data.db.write.duration`: Database write performance
+- `market.data.cache.hit.ratio`: Cache performance
 
 ---
 
-## Leaderboard Service
-
-**Base URL**: `http://localhost:8085/leaderboard`
-
-### REST Endpoints
-
-#### GET /leaderboard/global
-**Description**: Get global leaderboard
-
-**Query Parameters**:
-- `period`: Ranking period (daily, weekly, monthly, all-time)
-- `limit`: Number of results (default: 100)
-- `offset`: Pagination offset
-
-**Response (200)**:
-```json
-{
-  "period": "monthly",
-  "leaderboard": [
-    {
-      "rank": 1,
-      "userId": "uuid",
-      "username": "TraderPro",
-      "totalReturn": 15000.00,
-      "totalReturnPercent": 15.00,
-      "portfolioValue": 115000.00,
-      "isCurrentUser": false
-    }
-  ],
-  "currentUser": {
-    "rank": 25,
-    "totalReturn": 5000.00,
-    "totalReturnPercent": 5.00,
-    "portfolioValue": 105000.00
-  },
-  "totalParticipants": 1000,
-  "updatedAt": "2025-07-30T15:30:00Z"
-}
-```
-
-#### GET /leaderboard/competitions
-**Description**: Get active competitions
-
-**Response (200)**:
-```json
-{
-  "competitions": [
-    {
-      "competitionId": "uuid",
-      "name": "Monthly Trading Challenge",
-      "description": "Best monthly return wins",
-      "startDate": "2025-07-01T00:00:00Z",
-      "endDate": "2025-07-31T23:59:59Z",
-      "participants": 500,
-      "prizePool": "$1000",
-      "isActive": true,
-      "userParticipating": true,
-      "userRank": 15
-    }
-  ]
-}
-```
-
-#### POST /leaderboard/competitions/{competitionId}/join
-**Description**: Join a competition
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Path Parameters**:
-- `competitionId`: Competition UUID
-
-**Response (200)**:
-```json
-{
-  "message": "Successfully joined competition",
-  "competitionId": "uuid",
-  "startingRank": 250
-}
-```
-
----
-
-## Notification Service
-
-**Base URL**: `http://localhost:8086/notifications`
-
-### REST Endpoints
-
-#### GET /notifications
-**Description**: Get user notifications
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Query Parameters**:
-- `type`: Filter by notification type
-- `read`: Filter by read status (true/false)
-- `limit`: Number of results
-- `offset`: Pagination offset
-
-**Response (200)**:
-```json
-{
-  "notifications": [
-    {
-      "notificationId": "uuid",
-      "type": "ORDER_FILLED",
-      "title": "Order Executed",
-      "message": "Your buy order for 100 AAPL shares has been filled at $150.25",
-      "data": {
-        "orderId": "uuid",
-        "symbol": "AAPL",
-        "quantity": 100,
-        "price": 150.25
-      },
-      "isRead": false,
-      "createdAt": "2025-07-30T10:33:00Z"
-    }
-  ],
-  "unreadCount": 5,
-  "totalCount": 25
-}
-```
-
-#### PUT /notifications/{notificationId}/read
-**Description**: Mark notification as read
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Path Parameters**:
-- `notificationId`: Notification UUID
-
-**Response (200)**:
-```json
-{
-  "message": "Notification marked as read"
-}
-```
-
-#### PUT /notifications/read-all
-**Description**: Mark all notifications as read
-
-**Headers**: `Authorization: Bearer <token>`
-
-**Response (200)**:
-```json
-{
-  "message": "All notifications marked as read",
-  "count": 5
-}
-```
-
----
-
-## Kafka Event Contracts
-
-### Market Data Events
-
-#### Topic: `market-data.prices`
-**Description**: Real-time price updates
-
-**Event Schema**:
-```json
-{
-  "eventId": "uuid",
-  "eventType": "PRICE_UPDATE",
-  "timestamp": "2025-07-30T15:30:00Z",
-  "source": "market-data-service",
-  "data": {
-    "symbol": "AAPL",
-    "price": 150.25,
-    "bid": 150.20,
-    "ask": 150.30,
-    "volume": 1000000,
-    "change": 2.50,
-    "changePercent": 1.69
-  }
-}
-```
-
-#### Topic: `market-data.instruments`
-**Description**: Instrument lifecycle events
-
-**Event Schema**:
-```json
-{
-  "eventId": "uuid",
-  "eventType": "INSTRUMENT_ADDED|INSTRUMENT_UPDATED|INSTRUMENT_DELISTED",
-  "timestamp": "2025-07-30T15:30:00Z",
-  "source": "market-data-service",
-  "data": {
-    "symbol": "AAPL",
-    "name": "Apple Inc.",
-    "exchange": "NASDAQ",
-    "status": "ACTIVE"
-  }
-}
-```
-
-### Order Events
-
-#### Topic: `orders.lifecycle`
-**Description**: Order state changes
-
-**Event Schema**:
-```json
-{
-  "eventId": "uuid",
-  "eventType": "ORDER_CREATED|ORDER_FILLED|ORDER_CANCELLED|ORDER_REJECTED",
-  "timestamp": "2025-07-30T15:30:00Z",
-  "source": "order-simulation-service",
-  "data": {
-    "orderId": "uuid",
-    "userId": "uuid",
-    "symbol": "AAPL",
-    "side": "BUY",
-    "orderType": "LIMIT",
-    "quantity": 100,
-    "price": 150.00,
-    "status": "FILLED",
-    "fillPrice": 149.98,
-    "fillQuantity": 100,
-    "fees": 1.50
-  }
-}
-```
-
-### Portfolio Events
-
-#### Topic: `portfolio.updates`
-**Description**: Portfolio value changes
-
-**Event Schema**:
-```json
-{
-  "eventId": "uuid",
-  "eventType": "PORTFOLIO_UPDATED",
-  "timestamp": "2025-07-30T15:30:00Z",
-  "source": "portfolio-service",
-  "data": {
-    "userId": "uuid",
-    "totalValue": 105000.00,
-    "cashBalance": 25000.00,
-    "totalPnL": 5000.00,
-    "dayPnL": 250.00,
-    "holdings": [
-      {
-        "symbol": "AAPL",
-        "quantity": 100,
-        "marketValue": 15025.00,
-        "unrealizedPnL": 75.00
-      }
-    ]
-  }
-}
-```
-
-### User Events
-
-#### Topic: `users.lifecycle`
-**Description**: User account events
-
-**Event Schema**:
-```json
-{
-  "eventId": "uuid",
-  "eventType": "USER_REGISTERED|USER_VERIFIED|USER_UPDATED|USER_DELETED",
-  "timestamp": "2025-07-30T15:30:00Z",
-  "source": "user-management-service",
-  "data": {
-    "userId": "uuid",
-    "username": "string",
-    "email": "string"
-  }
-}
-```
-
-### Notification Events
-
-#### Topic: `notifications.outbound`
-**Description**: Notification delivery requests
-
-**Event Schema**:
-```json
-{
-  "eventId": "uuid",
-  "eventType": "SEND_NOTIFICATION",
-  "timestamp": "2025-07-30T15:30:00Z",
-  "source": "order-simulation-service",
-  "data": {
-    "userId": "uuid",
-    "type": "ORDER_FILLED",
-    "channels": ["EMAIL", "PUSH"],
-    "title": "Order Executed",
-    "message": "Your buy order for 100 AAPL shares has been filled",
-    "data": {
-      "orderId": "uuid",
-      "symbol": "AAPL"
-    }
-  }
-}
-```
-
-## Error Response Format
-
-All services use a standardized error response format:
-
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid request parameters",
-    "details": [
-      {
-        "field": "quantity",
-        "message": "Quantity must be greater than 0"
-      }
-    ],
-    "timestamp": "2025-07-30T15:30:00Z",
-    "path": "/orders",
-    "requestId": "uuid"
-  }
-}
-```
-
-## Common HTTP Status Codes
-
-- `200 OK`: Successful request
-- `201 Created`: Resource created successfully
-- `400 Bad Request`: Invalid request parameters
-- `401 Unauthorized`: Authentication required
-- `403 Forbidden`: Insufficient permissions
-- `404 Not Found`: Resource not found
-- `409 Conflict`: Resource conflict (e.g., duplicate order)
-- `422 Unprocessable Entity`: Validation error
-- `429 Too Many Requests`: Rate limit exceeded
-- `500 Internal Server Error`: Server error
-- `503 Service Unavailable`: Service temporarily unavailable
-
-This API contract serves as the definitive guide for service integration and client development.
