@@ -28,4 +28,9 @@ public class MarketDataCacheServiceImpl implements MarketDataCacheService {     
     public void invalidateAllCache() {
 
     }
+
+    @Override
+    public void cacheLatestCandles(String cacheKey, Candle candle) {
+
+    }
 }
