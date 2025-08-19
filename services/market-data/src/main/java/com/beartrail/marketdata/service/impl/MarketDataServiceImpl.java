@@ -52,16 +52,14 @@ public class MarketDataServiceImpl implements MarketDataService {
 
             PriceUpdateEvent priceUpdateEvent = objectMapper.readValue(message, PriceUpdateEvent.class);
 
-            String instrumentToken = priceUpdateEvent.getInstrumentToken();
-            String tradingName = instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(instrumentToken);
-
             // finding existing stock or create and save new one
             Stock stock = stockRepository.findBySymbol(priceUpdateEvent.getSymbol());
             if (stock == null) {
+                String instrumentToken = priceUpdateEvent.getInstrumentToken();
                 stock = Stock.builder()
                         .symbol(priceUpdateEvent.getSymbol())
                         .instrumentToken(instrumentToken)
-                        .tradingName(tradingName)
+                        .tradingName(instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(instrumentToken))
                         .lastPrice(priceUpdateEvent.getLastPrice())
                         .build();
                 stock = stockRepository.save(stock);
@@ -110,7 +108,8 @@ public class MarketDataServiceImpl implements MarketDataService {
 
             marketDataRepository.save(candle);                  // TODO: batch save for performace opti
 
-            log.info("Market data saved for symbol: {} ({})", stock.getSymbol(), tradingName);
+            log.info("Market data saved for symbol: {} ({})", stock.getSymbol(),
+                    instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(priceUpdateEvent.getInstrumentToken()));
         } catch (JsonProcessingException e) {
             log.error("Failed to parse market data message: {}", message, e);
             throw e; // rethrowing here is to ensure the message is not acknowledged if parsing fails
