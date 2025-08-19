@@ -16,18 +16,22 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     Stock findBySymbol(String symbol);
 
     @Modifying
-    @Query("""
-        INSERT INTO stocks (symbol, instrument_token, trading_name, last_price)\s
+    @Query(value = """
+        INSERT INTO stocks (symbol, instrument_token, trading_name, last_price)
         VALUES (:symbol, :instrumentToken, :tradingName, :lastPrice)
-        ON DUPLICATE KEY UPDATE\s
-        last_price = VALUES(last_price),
-        updated_at = CURRENT_TIMESTAMP
-       \s""")
+        ON CONFLICT (symbol)
+        DO UPDATE SET last_price = EXCLUDED.last_price
+        """, nativeQuery = true)
     void upsertStock(@Param("symbol") String symbol,
                      @Param("instrumentToken") String instrumentToken,
                      @Param("tradingName") String tradingName,
                      @Param("lastPrice") BigDecimal lastPrice);
 
-    void updateLastPricesInBatch(Set<String> symbolsToUpdate);
+    @Modifying
+    @Query("""
+        UPDATE Stock s
+        SET s.lastPrice = s.lastPrice
+        WHERE s.symbol IN :symbols
+        """)
+    void updateLastPricesInBatch(@Param("symbols") Set<String> symbolsToUpdate);
 }
-
