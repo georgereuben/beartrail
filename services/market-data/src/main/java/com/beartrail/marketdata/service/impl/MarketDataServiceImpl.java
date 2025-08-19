@@ -76,23 +76,14 @@ public class MarketDataServiceImpl implements MarketDataService {
         marketDataRepository.save(candle);
     }
 
-    private Stock findOrCreateStock(PriceUpdateEvent priceUpdateEvent) {
-        Stock stock = stockRepository.findBySymbol(priceUpdateEvent.getSymbol());
-        if (stock == null) {
-            stock = Stock.builder()
-                    .symbol(priceUpdateEvent.getSymbol())
-                    .instrumentToken(priceUpdateEvent.getInstrumentToken())
-                    .tradingName(instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(priceUpdateEvent.getInstrumentToken()))
-                    .lastPrice(priceUpdateEvent.getLastPrice())
-                    .build();
-            stock = stockRepository.save(stock);
-            log.info("Created new stock entity for symbol: {}", stock.getSymbol());
-        } else {
-            stock.setLastPrice(priceUpdateEvent.getLastPrice());
-            stock = stockRepository.save(stock);
-            log.info("Updated existing stock entity for symbol: {}", stock.getSymbol());
-        }
-        return stock;
+    private Stock findOrCreateStock(PriceUpdateEvent event) {
+        stockRepository.upsertStock(
+                event.getSymbol(),
+                event.getInstrumentToken(),
+                instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(event.getInstrumentToken()),
+                BigDecimal.valueOf(event.getLastPrice())
+        );
+        return stockRepository.findBySymbol(event.getSymbol());
     }
 
     private Candle createCandle(Stock stock, PriceUpdateEvent priceUpdateEvent) {
