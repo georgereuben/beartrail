@@ -120,7 +120,7 @@ public class MarketDataServiceImpl implements MarketDataService {
         }
 
         return Candle.builder()
-                .candleId(Long.valueOf(UUID.randomUUID().toString()))
+                .candleId(UUID.randomUUID())
                 .stock(stock)
                 .timeFrame(timeFrame)
                 .timestamp(Instant.now()

@@ -6,12 +6,13 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class OhlcCandleId implements Serializable {
     private static final long serialVersionUID = 1L;
-    private Long candleId;
+    private UUID candleId;
     private Instant timestamp;
 }
