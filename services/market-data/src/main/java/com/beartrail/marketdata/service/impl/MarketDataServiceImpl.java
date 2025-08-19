@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -47,33 +49,59 @@ public class MarketDataServiceImpl implements MarketDataService {
         this.instrumentKeyLoader = instrumentKeyLoader;
     }
 
+    private final Map<String, Long> instrumentTokenToStockIdCache = new ConcurrentHashMap<>();
+
+    @Cacheable(key = "'stock_id_' + #instrumentToken")
+    public Long getStockIdByInstrumentToken(String instrumentToken) {
+        return stockRepository.findIdByInstrumentToken(instrumentToken);
+    }
+
+    @Cacheable(key = "'stock_entity_' + #stockId")
+    public Stock getStockById(Long stockId) {
+        return stockRepository.findById(stockId).orElse(null);
+    }
+
     @Cacheable(key = "'timeframe_' + #value")
     public TimeFrame getTimeFrame(String value) {
         return timeFrameRepository.findByValue(value);
-    }
-
-    @Cacheable(key = "'stock_' + #symbol")
-    public Stock getStockBySymbol(String symbol) {
-        return stockRepository.findBySymbol(symbol);
     }
 
     @KafkaListener(topics = "market-data-updates", containerFactory = "batchFactory")
     @Transactional
     public void consumeMarketDataBatch(List<String> messages) throws JsonProcessingException {
         List<Candle> candles = new ArrayList<>();
-        Set<String> symbolsToUpdate = new HashSet<>();
+        Set<String> newInstrumentTokens = new HashSet<>();
 
+        // parsing all messages into PriceUpdateEvent objects
+        List<PriceUpdateEvent> events = new ArrayList<>();
         for (String message : messages) {
-            PriceUpdateEvent event = parseMessage(message);
-            Stock stock = findOrCreateStock(event);
-            candles.add(createCandle(stock, event));
-            symbolsToUpdate.add(event.getSymbol());
+            events.add(parseMessage(message));
+        }
+
+        // check which stocks need creation, some might be new
+        for (PriceUpdateEvent event : events) {
+            Long stockId = getStockIdByInstrumentToken(event.getInstrumentToken());
+            if (stockId == null) {
+                newInstrumentTokens.add(event.getInstrumentToken());
+            }
+        }
+
+        // batch create only the new stocks
+        if (!newInstrumentTokens.isEmpty()) {
+            createNewStocks(events, newInstrumentTokens);
+            evictStockCaches(newInstrumentTokens);
+        }
+
+        TimeFrame timeFrame = getTimeFrame("I1");
+        for (PriceUpdateEvent event : events) {
+            Long stockId = getStockIdByInstrumentToken(event.getInstrumentToken());
+            Stock stock = getStockById(stockId);
+            candles.add(createCandle(stock, event, timeFrame));
         }
 
         marketDataRepository.saveAll(candles);
-
-        stockRepository.updateLastPricesInBatch(symbolsToUpdate);
     }
+
 
     private PriceUpdateEvent parseMessage(String message) throws JsonProcessingException {
         try {
@@ -86,52 +114,57 @@ public class MarketDataServiceImpl implements MarketDataService {
         }
     }
 
-    private Stock findOrCreateStock(PriceUpdateEvent event) {
-        stockRepository.upsertStock(
-                event.getSymbol(),
-                event.getInstrumentToken(),
-                instrumentKeyLoader.getInstrumentKeysToSymbolMap().get(event.getInstrumentToken()),
-                BigDecimal.valueOf(event.getLastPrice())
-        );
-        return getStockBySymbol(event.getSymbol());
+    @CacheEvict(allEntries = true, cacheNames = {"stocks"})
+    private void evictStockCaches(Set<String> instrumentTokens) {
+        // Force cache refresh for new stocks
     }
 
-    private Candle createCandle(Stock stock, PriceUpdateEvent priceUpdateEvent) {
-        TimeFrame timeFrame = getTimeFrame("I1");
-        if (timeFrame == null) {
-            log.error("TimeFrame with value 'I1' not found in database");
-            throw new RuntimeException("Required TimeFrame not found");
+    private void createNewStocks(List<PriceUpdateEvent> events, Set<String> newInstrumentTokens) {
+        List<Stock> newStocks = new ArrayList<>();
+        Map<String, String> instrumentToNameMap = instrumentKeyLoader.getInstrumentKeysToSymbolMap();
+
+        for (PriceUpdateEvent event : events) {
+            if (newInstrumentTokens.contains(event.getInstrumentToken())) {
+                Stock stock = Stock.builder()
+                        .symbol(event.getSymbol())
+                        .instrumentToken(event.getInstrumentToken())
+                        .tradingName(instrumentToNameMap.get(event.getInstrumentToken()))
+                        .lastPrice(event.getLastPrice())
+                        .build();
+                newStocks.add(stock);
+            }
         }
 
-        // if prevOhlc is null, it means this is the first update for this stock or that the third party API did not provide previous OHLC data
-        if (priceUpdateEvent.getPrevOhlc() == null) {
-            log.warn("Previous OHLC data is null for symbol: {}, creating a new candle with last price as open, high, low, and close", stock.getSymbol());
+        stockRepository.saveAll(newStocks);
+        log.info("Created {} new stocks", newStocks.size());
+    }
+
+    private Candle createCandle(Stock stock, PriceUpdateEvent event, TimeFrame timeFrame) {
+        if (event.getPrevOhlc() == null) {
             PriceUpdateDto priceUpdateDto = PriceUpdateDto.builder()
                     .timestamp(Instant.now().toEpochMilli())
-                    .openPrice(BigDecimal.valueOf(priceUpdateEvent.getLastPrice()))
-                    .highPrice(BigDecimal.valueOf(priceUpdateEvent.getLastPrice()))
-                    .lowPrice(BigDecimal.valueOf(priceUpdateEvent.getLastPrice()))
-                    .closePrice(BigDecimal.valueOf(priceUpdateEvent.getLastPrice()))
+                    .openPrice(BigDecimal.valueOf(event.getLastPrice()))
+                    .highPrice(BigDecimal.valueOf(event.getLastPrice()))
+                    .lowPrice(BigDecimal.valueOf(event.getLastPrice()))
+                    .closePrice(BigDecimal.valueOf(event.getLastPrice()))
                     .volume(0L)
                     .build();
-            priceUpdateEvent.setPrevOhlc(priceUpdateDto);
-        } else {
-            log.info("Using provided previous OHLC data for symbol: {}", stock.getSymbol());
+            event.setPrevOhlc(priceUpdateDto);
         }
 
         return Candle.builder()
                 .candleId(UUID.randomUUID())
                 .stock(stock)
                 .timeFrame(timeFrame)
-                .timestamp(Instant.now()
-                    .truncatedTo(ChronoUnit.MINUTES)) // truncated to that minute
-                .openPrice(priceUpdateEvent.getPrevOhlc().getOpenPrice())
-                .highPrice(priceUpdateEvent.getPrevOhlc().getHighPrice())
-                .lowPrice(priceUpdateEvent.getPrevOhlc().getLowPrice())
-                .closePrice(priceUpdateEvent.getPrevOhlc().getClosePrice())
-                .volume(priceUpdateEvent.getPrevOhlc().getVolume())
+                .timestamp(Instant.now().truncatedTo(ChronoUnit.MINUTES))
+                .openPrice(event.getPrevOhlc().getOpenPrice())
+                .highPrice(event.getPrevOhlc().getHighPrice())
+                .lowPrice(event.getPrevOhlc().getLowPrice())
+                .closePrice(event.getPrevOhlc().getClosePrice())
+                .volume(event.getPrevOhlc().getVolume())
                 .build();
     }
+
 
     @Override
     public Optional<Candle> getLatestMarketData(String symbol, String timeInterval, Instant timestamp) {
