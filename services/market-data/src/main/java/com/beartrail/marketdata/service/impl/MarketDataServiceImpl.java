@@ -70,40 +70,37 @@ public class MarketDataServiceImpl implements MarketDataService {
     @KafkaListener(topics = "market-data-updates", containerFactory = "batchFactory")
     @Transactional
     public void consumeMarketDataBatch(List<String> messages) throws JsonProcessingException {
-        List<Candle> candles = new ArrayList<>();
-        Set<String> newInstrumentTokens = new HashSet<>();
-
         List<PriceUpdateEvent> events = new ArrayList<>();
         for (String message : messages) {
             events.add(parseMessage(message));
         }
 
-        // check which stocks need creation, some might be new
-        for (PriceUpdateEvent event : events) {
-            Long stockId = getStockIdByInstrumentToken(event.getInstrumentToken());
-            if (stockId == null) {
-                newInstrumentTokens.add(event.getInstrumentToken());
-            }
-        }
+        Set<String> allInstrumentTokens = events.stream()
+                .map(PriceUpdateEvent::getInstrumentToken)
+                .collect(Collectors.toSet());
 
-        // batch create only the new stocks
+        List<Stock> existingStocks = stockRepository.findByInstrumentTokenIn(allInstrumentTokens);
+        Map<String, Stock> existingStockMap = existingStocks.stream()
+                .collect(Collectors.toMap(Stock::getInstrumentToken, stock -> stock));
+
+        Set<String> newInstrumentTokens = allInstrumentTokens.stream()
+                .filter(token -> !existingStockMap.containsKey(token))
+                .collect(Collectors.toSet());
+
         if (!newInstrumentTokens.isEmpty()) {
             createNewStocks(events, newInstrumentTokens);
             evictStockCaches(newInstrumentTokens);
+
+            List<Stock> newlyCreatedStocks = stockRepository.findByInstrumentTokenIn(newInstrumentTokens);
+            newlyCreatedStocks.forEach(stock ->
+                    existingStockMap.put(stock.getInstrumentToken(), stock));
         }
 
-        //batch fetch all required stocks in a single query
-        Set<String> allInstrumentTokens = events.stream()
-            .map(PriceUpdateEvent::getInstrumentToken)
-            .collect(Collectors.toSet());
-
-        List<Stock> stocks = stockRepository.findByInstrumentTokenIn(allInstrumentTokens);
-        Map<String, Stock> instrumentTokenToStockMap = stocks.stream()
-            .collect(Collectors.toMap(Stock::getInstrumentToken, stock -> stock));
-
         TimeFrame timeFrame = getTimeFrame("I1");
+        List<Candle> candles = new ArrayList<>(events.size());
+
         for (PriceUpdateEvent event : events) {
-            Stock stock = instrumentTokenToStockMap.get(event.getInstrumentToken());
+            Stock stock = existingStockMap.get(event.getInstrumentToken());
             if (stock == null) {
                 log.error("Stock not found for instrument token: {}", event.getInstrumentToken());
                 continue;
@@ -113,6 +110,7 @@ public class MarketDataServiceImpl implements MarketDataService {
 
         marketDataRepository.saveAll(candles);
     }
+
 
 
     private PriceUpdateEvent parseMessage(String message) throws JsonProcessingException {
