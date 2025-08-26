@@ -80,35 +80,34 @@ public class MarketDataServiceImpl implements MarketDataService {
                 .collect(Collectors.toSet());
 
         List<Stock> existingStocks = stockRepository.findByInstrumentTokenIn(allInstrumentTokens);
-        Map<String, Stock> existingStockMap = existingStocks.stream()
+        Map<String, Stock> stockMap = existingStocks.stream()
                 .collect(Collectors.toMap(Stock::getInstrumentToken, stock -> stock));
 
         Set<String> newInstrumentTokens = allInstrumentTokens.stream()
-                .filter(token -> !existingStockMap.containsKey(token))
+                .filter(token -> !stockMap.containsKey(token))
                 .collect(Collectors.toSet());
 
         if (!newInstrumentTokens.isEmpty()) {
             createNewStocks(events, newInstrumentTokens);
             evictStockCaches(newInstrumentTokens);
 
-            List<Stock> newlyCreatedStocks = stockRepository.findByInstrumentTokenIn(newInstrumentTokens);
-            newlyCreatedStocks.forEach(stock ->
-                    existingStockMap.put(stock.getInstrumentToken(), stock));
+            stockRepository.findByInstrumentTokenIn(newInstrumentTokens)
+                    .forEach(stock -> stockMap.put(stock.getInstrumentToken(), stock));
         }
 
-        TimeFrame timeFrame = getTimeFrame("I1");
-        List<Candle> candles = new ArrayList<>(events.size());
-
-        for (PriceUpdateEvent event : events) {
-            Stock stock = existingStockMap.get(event.getInstrumentToken());
-            if (stock == null) {
-                log.error("Stock not found for instrument token: {}", event.getInstrumentToken());
-                continue;
-            }
-            candles.add(createCandle(stock, event, timeFrame));
-        }
-
-        marketDataRepository.saveAll(candles);
+        marketDataRepository.saveAll(
+                events.stream()
+                        .map(event -> {
+                            Stock stock = stockMap.get(event.getInstrumentToken());
+                            if (stock == null) {
+                                log.error("Stock not found for instrument token: {}", event.getInstrumentToken());
+                                return null;
+                            }
+                            return createCandle(stock, event, getTimeFrame("I1"));
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList())
+        );
     }
 
 
@@ -130,24 +129,30 @@ public class MarketDataServiceImpl implements MarketDataService {
     }
 
     private void createNewStocks(List<PriceUpdateEvent> events, Set<String> newInstrumentTokens) {
-        Map<String, String> instrumentToNameMap = instrumentKeyLoader.getInstrumentKeysToSymbolMap();
-        Set<String> processedSymbols = new HashSet<>();
-
-        for (PriceUpdateEvent event : events) {
-            if (newInstrumentTokens.contains(event.getInstrumentToken()) &&
-                !processedSymbols.contains(event.getSymbol())) {
-
-                stockRepository.upsertStock(
-                    event.getSymbol(),
-                    event.getInstrumentToken(),
-                    instrumentToNameMap.get(event.getInstrumentToken()),
-                    BigDecimal.valueOf(event.getLastPrice())
-                );
-                processedSymbols.add(event.getSymbol());
-            }
+        if (newInstrumentTokens.isEmpty()) {
+            return;
         }
 
-        log.info("Upserted {} stocks", processedSymbols.size());
+        Map<String, String> instrumentToNameMap = instrumentKeyLoader.getInstrumentKeysToSymbolMap();
+
+        events.stream()
+                .filter(event -> newInstrumentTokens.contains(event.getInstrumentToken()))
+                .collect(Collectors.toMap(
+                        PriceUpdateEvent::getSymbol,
+                        event -> event,
+                        (existing, replacement) -> existing)) //keep only first occurrence for duplicates
+                .values()
+                .forEach(event -> {
+                    String instrumentName = instrumentToNameMap.get(event.getInstrumentToken());
+                    stockRepository.upsertStock(
+                            event.getSymbol(),
+                            event.getInstrumentToken(),
+                            instrumentName,
+                            BigDecimal.valueOf(event.getLastPrice())
+                    );
+                });
+
+        log.info("Upserted {} stocks", newInstrumentTokens.size());
     }
 
     private Candle createCandle(Stock stock, PriceUpdateEvent event, TimeFrame timeFrame) {
