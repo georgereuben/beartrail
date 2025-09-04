@@ -110,8 +110,6 @@ public class MarketDataServiceImpl implements MarketDataService {
         );
     }
 
-
-
     private PriceUpdateEvent parseMessage(String message) throws JsonProcessingException {
         try {
             PriceUpdateEvent priceUpdateEvent = objectMapper.readValue(message, PriceUpdateEvent.class);
