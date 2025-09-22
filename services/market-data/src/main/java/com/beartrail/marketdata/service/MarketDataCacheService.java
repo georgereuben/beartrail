@@ -13,4 +13,6 @@ public interface MarketDataCacheService {
     void invalidateCache(String symbol, String timeInterval);
 
     void invalidateAllCache();
+
+    void cacheLatestCandles(String cacheKey, Candle candle);
 }

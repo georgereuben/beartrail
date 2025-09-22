@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "ohlc_candles")
@@ -21,7 +22,7 @@ public class Candle {
 
     @Id
     @Column(name="candle_id", nullable = false)
-    private Long candleId;
+    private UUID candleId;
 
     @Id
     @Column(nullable = false)
