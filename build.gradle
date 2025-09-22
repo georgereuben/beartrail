@@ -1,9 +1,18 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
 plugins {
     id 'java'
     id 'checkstyle'
     id 'org.springframework.boot' version '3.5.3' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
     id 'com.github.spotbugs' version '6.0.7' apply false
+    id 'com.diffplug.spotless' version '6.25.0'
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
 }
 
 // Global properties for all projects
@@ -23,6 +32,13 @@ subprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'pmd'
     apply plugin: 'com.github.spotbugs'
+    apply plugin: 'com.diffplug.spotless'
+
+    spotless {
+        java {
+            googleJavaFormat()
+        }
+    }
 
     java {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -58,7 +74,7 @@ configure(subprojects.findAll { it.path.startsWith(':shared:') }) {
 
     dependencyManagement {
         imports {
-            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+            mavenBom SpringBootPlugin.BOM_COORDINATES
             mavenBom 'org.testcontainers:testcontainers-bom:1.19.3'
         }
     }
@@ -95,7 +111,7 @@ configure(subprojects.findAll { it.path.startsWith(':services:') }) {
 
     dependencyManagement {
         imports {
-            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+            mavenBom SpringBootPlugin.BOM_COORDINATES
             mavenBom 'org.testcontainers:testcontainers-bom:1.19.3'
         }
     }

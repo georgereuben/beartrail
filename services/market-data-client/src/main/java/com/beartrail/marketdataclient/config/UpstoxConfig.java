@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "beartrail.upstox")
 public class UpstoxConfig {
-    private String authToken;
-    private String baseUrl;                      // TODO: add redirect workflow for fetching authToken from frontend (with redirect URL)
+  private String authToken;
+  private String
+      baseUrl; // TODO: add redirect workflow for fetching authToken from frontend (with redirect
+  // URL)
 }

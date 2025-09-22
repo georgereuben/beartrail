@@ -10,6 +10,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public abstract class Instrument {
-    private String symbol;
-    private String instrumentType;
+  private String symbol;
+  private String instrumentType;
 }

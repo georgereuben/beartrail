@@ -1,5 +1,3 @@
 package com.beartrail.marketdataclient.model.dto;
 
-public class HistoricalMarketDataResponseDto {
-
-}
+public class HistoricalMarketDataResponseDto {}

@@ -17,20 +17,24 @@ import lombok.*;
 @Builder
 public class Stock extends Instrument {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)                 // TODO : check primary key of stock table should be symbol related to avoid multiple entried of the same stcok
-    @Column(name = "stock_id", nullable = false)
-    private Long id;
+  @Id
+  @GeneratedValue(
+      strategy =
+          GenerationType
+              .IDENTITY) // TODO : check primary key of stock table should be symbol related to
+  // avoid multiple entried of the same stcok
+  @Column(name = "stock_id", nullable = false)
+  private Long id;
 
-    @Column(name = "symbol", nullable = false, unique = true)
-    private String symbol;
+  @Column(name = "symbol", nullable = false, unique = true)
+  private String symbol;
 
-    @Column(name = "trading_name", nullable = false)
-    private String tradingName;
+  @Column(name = "trading_name", nullable = false)
+  private String tradingName;
 
-    @Column(name="instrument_token", nullable = false)
-    private String instrumentToken;
+  @Column(name = "instrument_token", nullable = false)
+  private String instrumentToken;
 
-    @Column(name="last_price", nullable = false)
-    private Double lastPrice;
+  @Column(name = "last_price", nullable = false)
+  private Double lastPrice;
 }

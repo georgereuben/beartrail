@@ -1,5 +1,3 @@
 package com.beartrail.user.config;
 
-public class KafkaConfig {
-    
-} 
+public class KafkaConfig {}

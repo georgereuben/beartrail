@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TimeFrameRepository extends JpaRepository<TimeFrame, Long> {
-    TimeFrame findByValue(String value);
+  TimeFrame findByValue(String value);
 }

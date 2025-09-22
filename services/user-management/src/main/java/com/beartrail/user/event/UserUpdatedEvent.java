@@ -1,5 +1,3 @@
 package com.beartrail.user.event;
 
-public class UserUpdatedEvent {
-    
-} 
+public class UserUpdatedEvent {}

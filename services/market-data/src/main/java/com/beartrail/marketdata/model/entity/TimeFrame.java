@@ -12,18 +12,18 @@ import lombok.NoArgsConstructor;
 @Table(name = "timeframes")
 public class TimeFrame {
 
-    @Id
-    @Column(name = "timeframe_id", nullable = false)
-    private Integer id;
+  @Id
+  @Column(name = "timeframe_id", nullable = false)
+  private Integer id;
 
-    @Column(name = "name", nullable = false)
-    private String name; // like ONE_MINUTE, THIRTY_MINUTES, ONE_DAY
+  @Column(name = "name", nullable = false)
+  private String name; // like ONE_MINUTE, THIRTY_MINUTES, ONE_DAY
 
-    @Column(name = "value", nullable = false)
-    private String value; // like I1, I30, 1d
+  @Column(name = "value", nullable = false)
+  private String value; // like I1, I30, 1d
 
-    // helper method to get tfv enum from string value
-    public TimeFrameValue getTimeFrameValue() {
-        return TimeFrameValue.fromValue(this.value);
-    }
+  // helper method to get tfv enum from string value
+  public TimeFrameValue getTimeFrameValue() {
+    return TimeFrameValue.fromValue(this.value);
+  }
 }

@@ -9,12 +9,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DataDto {
-    @JsonProperty("last_price")
-    private Double lastPrice;
-    @JsonProperty("instrument_token")
-    private String instrumentToken;
-    @JsonProperty("prev_ohlc")
-    private PriceUpdateDto prevOhlc;
-    @JsonProperty("live_ohlc")
-    private PriceUpdateDto liveOhlc;
+  @JsonProperty("last_price")
+  private Double lastPrice;
+
+  @JsonProperty("instrument_token")
+  private String instrumentToken;
+
+  @JsonProperty("prev_ohlc")
+  private PriceUpdateDto prevOhlc;
+
+  @JsonProperty("live_ohlc")
+  private PriceUpdateDto liveOhlc;
 }
