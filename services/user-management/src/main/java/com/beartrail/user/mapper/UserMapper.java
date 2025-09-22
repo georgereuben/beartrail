@@ -1,5 +1,3 @@
 package com.beartrail.user.mapper;
 
-public class UserMapper {
-    
-} 
+public class UserMapper {}

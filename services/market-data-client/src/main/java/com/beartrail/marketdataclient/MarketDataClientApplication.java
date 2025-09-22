@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class MarketDataClientApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MarketDataClientApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(MarketDataClientApplication.class, args);
+  }
 }

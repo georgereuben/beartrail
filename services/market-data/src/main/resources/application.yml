@@ -18,6 +18,9 @@ beartrail:
       market-data-updates: market-data-updates
 
 spring:
+  cache:
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=300s
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -34,16 +37,15 @@ spring:
     password: beartrail123
     driver-class-name: org.postgresql.Driver
   jpa:
-    hibernate:
-      ddl-auto: none
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
     properties:
       hibernate:
         jdbc:
           batch_size: 100
+          batch_inserts: true
         order_inserts: true
         order_updates: true
+        batch_versioned: true
+        generate_statistics: false
   flyway:
     enabled: true
     locations: classpath:db/migration

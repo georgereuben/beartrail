@@ -1,5 +1,3 @@
 package com.beartrail.user.dto;
 
-public class UserUpdateRequest {
-    
-} 
+public class UserUpdateRequest {}

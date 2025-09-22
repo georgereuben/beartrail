@@ -20,7 +20,7 @@ insert into timeframes (name, value) values
     ('1 day', '1d');
 
 create table ohlc_candles (
-    candle_id BIGSERIAL,
+    candle_id UUID,
     stock_id INTEGER NOT NULL REFERENCES stocks(stock_id) ON DELETE CASCADE,
     timeframe_id INTEGER NOT NULL REFERENCES timeframes(timeframe_id),
     timestamp TIMESTAMPTZ NOT NULL default NOW(),
